@@ -20,6 +20,9 @@ public class Examen {
     private LocalDateTime dateExamen;
     private Long patientId;
 
+    @Enumerated(EnumType.STRING)
+    private ExamStatus status;
+
     @OneToMany(mappedBy = "examen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Resultat> resultats = new ArrayList<>();
 }
