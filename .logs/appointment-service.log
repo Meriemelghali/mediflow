@@ -35,25 +35,12 @@
 
  :: Spring Boot ::               (v3.5.13)
 
-2026-05-03T21:14:01.156+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Starting AppointmentServiceApplication using Java 17.0.12 with PID 14924 (C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service\target\classes started by user in C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service)
-2026-05-03T21:14:01.188+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : No active profile set, falling back to 1 default profile: "default"
-2026-05-03T21:14:06.017+01:00  INFO 14924 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
-2026-05-03T21:14:06.061+01:00  INFO 14924 --- [appointment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-05-03T21:14:06.062+01:00  INFO 14924 --- [appointment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
-2026-05-03T21:14:06.183+01:00  INFO 14924 --- [appointment-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-05-03T21:14:06.188+01:00  INFO 14924 --- [appointment-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4405 ms
-2026-05-03T21:14:07.334+01:00  INFO 14924 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
-2026-05-03T21:14:07.352+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Started AppointmentServiceApplication in 9.546 seconds (process running for 12.269)
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD FAILURE
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  17:36 min
-[INFO] Finished at: 2026-05-03T21:31:20+01:00
-[INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.13:run (default-cli) on project appointment-service: Process terminated with exit code: -1 -> [Help 1]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+2026-05-03T22:05:49.974+01:00  INFO 3408 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Starting AppointmentServiceApplication using Java 17.0.12 with PID 3408 (C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service\target\classes started by user in C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service)
+2026-05-03T22:05:49.983+01:00  INFO 3408 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : No active profile set, falling back to 1 default profile: "default"
+2026-05-03T22:05:52.221+01:00  INFO 3408 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-05-03T22:05:52.259+01:00  INFO 3408 --- [appointment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-03T22:05:52.261+01:00  INFO 3408 --- [appointment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
+2026-05-03T22:05:52.369+01:00  INFO 3408 --- [appointment-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-03T22:05:52.372+01:00  INFO 3408 --- [appointment-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2241 ms
+2026-05-03T22:05:53.122+01:00  INFO 3408 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-05-03T22:05:53.139+01:00  INFO 3408 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Started AppointmentServiceApplication in 5.142 seconds (process running for 6.312)

@@ -15,7 +15,7 @@
 [32mmain.server.mjs[39m     [2m | [22m[2mmain.server[22m     [2m | [22m [36m49.35 kB[39m[2m | [22m
 [32mserver.mjs[39m          [2m | [22m[2mserver[22m          [2m | [22m  [36m1.86 kB[39m[2m | [22m
 
-Application bundle generation complete. [5.177 seconds]
+Application bundle generation complete. [3.934 seconds]
 
 Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.

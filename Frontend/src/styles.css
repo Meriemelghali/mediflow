@@ -1,1 +1,113 @@
-/* You can add global styles to this file, and also import other style files */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Sidebar */
+  --sidebar-bg: #080c18;
+  --sidebar-hover: rgba(255, 255, 255, 0.04);
+  --sidebar-active-bg: rgba(0, 200, 232, 0.09);
+  --sidebar-active-border: #00c8e8;
+  --sidebar-text: #5a6a87;
+  --sidebar-text-hover: #c8d4e8;
+  --sidebar-text-active: #00c8e8;
+  --sidebar-width: 258px;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+
+  /* Content */
+  --bg: #f0f3f8;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-muted: #cbd5e1;
+
+  /* Accent */
+  --accent: #00c8e8;
+  --accent-dark: #0099b5;
+  --accent-dim: rgba(0, 200, 232, 0.1);
+
+  /* Status */
+  --status-scheduled: #3b82f6;
+  --status-scheduled-bg: rgba(59, 130, 246, 0.08);
+  --status-confirmed: #10b981;
+  --status-confirmed-bg: rgba(16, 185, 129, 0.08);
+  --status-completed: #8b5cf6;
+  --status-completed-bg: rgba(139, 92, 246, 0.08);
+  --status-cancelled: #ef4444;
+  --status-cancelled-bg: rgba(239, 68, 68, 0.08);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 16px 48px rgba(8, 12, 24, 0.28), 0 4px 12px rgba(8, 12, 24, 0.12);
+
+  /* Geometry */
+  --radius-sm: 7px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Typography */
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'DM Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: var(--font);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+::selection {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dde3ee;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c8d0e0;
+}
