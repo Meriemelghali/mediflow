@@ -104,3 +104,4 @@
 2026-05-03T22:46:05.793+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
 2026-05-03T22:51:05.808+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
 2026-05-03T22:56:05.823+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T23:01:05.838+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration

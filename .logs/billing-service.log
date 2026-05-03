@@ -359,3 +359,4 @@ Hibernate:
 2026-05-03T22:46:04.377+01:00  INFO 11840 --- [billing-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
 2026-05-03T22:51:04.394+01:00  INFO 11840 --- [billing-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
 2026-05-03T22:56:04.416+01:00  INFO 11840 --- [billing-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T23:01:04.434+01:00  INFO 11840 --- [billing-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
