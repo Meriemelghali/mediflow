@@ -46,18 +46,7 @@ public class BedController {
         return bedService.assignBed(id);
     }
 
-    /**
-     * PUT /api/rooms/beds/{id}/admit
-     * Admet un patient dans un lit.
-     * Appelle le pharmacy-service via OpenFeign pour enrichir la réponse
-     * avec l'historique des médicaments et les alertes de stock.
-     *
-     * Body attendu :
-     * {
-     *   "patientId": 1,
-     *   "patientName": "Mohamed Ben Ali"
-     * }
-     */
+  
     @PutMapping("/beds/{id}/admit")
     public BedAssignmentResponse admitPatient(
             @PathVariable Long id,
