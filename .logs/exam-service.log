@@ -35,25 +35,12 @@
 
  :: Spring Boot ::               (v3.5.13)
 
-2026-05-03T21:14:01.013+01:00  INFO 22640 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : Starting ExamServiceApplication using Java 17.0.12 with PID 22640 (C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\exam-service\target\classes started by user in C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\exam-service)
-2026-05-03T21:14:01.022+01:00  INFO 22640 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : No active profile set, falling back to 1 default profile: "default"
-2026-05-03T21:14:05.474+01:00  INFO 22640 --- [exam-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8085 (http)
-2026-05-03T21:14:05.513+01:00  INFO 22640 --- [exam-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-05-03T21:14:05.514+01:00  INFO 22640 --- [exam-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
-2026-05-03T21:14:05.724+01:00  INFO 22640 --- [exam-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-05-03T21:14:05.728+01:00  INFO 22640 --- [exam-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4328 ms
-2026-05-03T21:14:07.216+01:00  INFO 22640 --- [exam-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8085 (http) with context path '/'
-2026-05-03T21:14:07.243+01:00  INFO 22640 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : Started ExamServiceApplication in 8.428 seconds (process running for 12.133)
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD FAILURE
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  17:34 min
-[INFO] Finished at: 2026-05-03T21:31:20+01:00
-[INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.13:run (default-cli) on project exam-service: Process terminated with exit code: -1 -> [Help 1]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+2026-05-03T22:05:48.041+01:00  INFO 3492 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : Starting ExamServiceApplication using Java 17.0.12 with PID 3492 (C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\exam-service\target\classes started by user in C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\exam-service)
+2026-05-03T22:05:48.049+01:00  INFO 3492 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-05-03T22:05:50.153+01:00  INFO 3492 --- [exam-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8085 (http)
+2026-05-03T22:05:50.192+01:00  INFO 3492 --- [exam-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-03T22:05:50.193+01:00  INFO 3492 --- [exam-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
+2026-05-03T22:05:50.311+01:00  INFO 3492 --- [exam-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-03T22:05:50.318+01:00  INFO 3492 --- [exam-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2187 ms
+2026-05-03T22:05:51.368+01:00  INFO 3492 --- [exam-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8085 (http) with context path '/'
+2026-05-03T22:05:51.384+01:00  INFO 3492 --- [exam-service] [           main] t.m.examservice.ExamServiceApplication   : Started ExamServiceApplication in 4.377 seconds (process running for 5.068)
