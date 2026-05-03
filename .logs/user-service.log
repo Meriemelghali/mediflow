@@ -2,6 +2,6 @@
 > user-service@1.0.0 start
 > node src/server.js
 
-◇ injected env (6) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (6) from .env // tip: ⌘ override existing { override: true }
 ✅ MongoDB connected
 ✅ Server running on http://localhost:8081
