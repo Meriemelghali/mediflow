@@ -1,0 +1,59 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------< tn.mediflow:appointment-service >-------------------
+[INFO] Building appointment-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.13:run (default-cli) > test-compile @ appointment-service >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ appointment-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ appointment-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ appointment-service ---
+[INFO] skip non existing resourceDirectory C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ appointment-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:3.5.13:run (default-cli) < test-compile @ appointment-service <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.13:run (default-cli) @ appointment-service ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.13)
+
+2026-05-03T21:14:01.156+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Starting AppointmentServiceApplication using Java 17.0.12 with PID 14924 (C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service\target\classes started by user in C:\Users\user\OneDrive\Bureau\Projet web MEDIFLOW\mediflow\Backend\services\appointment-service)
+2026-05-03T21:14:01.188+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : No active profile set, falling back to 1 default profile: "default"
+2026-05-03T21:14:06.017+01:00  INFO 14924 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-05-03T21:14:06.061+01:00  INFO 14924 --- [appointment-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-03T21:14:06.062+01:00  INFO 14924 --- [appointment-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
+2026-05-03T21:14:06.183+01:00  INFO 14924 --- [appointment-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-03T21:14:06.188+01:00  INFO 14924 --- [appointment-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4405 ms
+2026-05-03T21:14:07.334+01:00  INFO 14924 --- [appointment-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-05-03T21:14:07.352+01:00  INFO 14924 --- [appointment-service] [           main] t.m.a.AppointmentServiceApplication      : Started AppointmentServiceApplication in 9.546 seconds (process running for 12.269)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  17:36 min
+[INFO] Finished at: 2026-05-03T21:31:20+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.13:run (default-cli) on project appointment-service: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
