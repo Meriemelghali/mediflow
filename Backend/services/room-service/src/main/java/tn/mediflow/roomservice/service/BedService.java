@@ -7,9 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.mediflow.roomservice.entity.Bed;
 import tn.mediflow.roomservice.entity.Room;
+import tn.mediflow.roomservice.feign.BedAssignmentResponse;
+import tn.mediflow.roomservice.feign.DispensingDto;
+import tn.mediflow.roomservice.feign.MedicationDto;
+import tn.mediflow.roomservice.feign.PharmacyClient;
 import tn.mediflow.roomservice.repository.BedRepository;
 import tn.mediflow.roomservice.repository.RoomRepository;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -20,6 +25,7 @@ public class BedService {
 
     private final BedRepository bedRepository;
     private final RoomRepository roomRepository;
+    private final PharmacyClient pharmacyClient; // Communication OpenFeign → pharmacy-service
 
     // ============================
     // CREATE
@@ -78,7 +84,7 @@ public class BedService {
     }
 
     // ============================
-    // ASSIGN BED
+    // ASSIGN BED (simple — sans patient connu)
     // ============================
 
     public Bed assignBed(Long bedId) {
@@ -87,13 +93,74 @@ public class BedService {
 
         if (!bed.isAvailable()) {
             throw new IllegalStateException(
-                    "Le lit '" + bed.getBedNumber() + "' n'est pas disponible. Statut actuel: " + bed.getStatus());
+                    "Le lit '" + bed.getBedNumber() + "' n'est pas disponible. Statut: " + bed.getStatus());
         }
 
         bed.setStatus(Bed.BedStatus.RESERVED);
         Bed saved = bedRepository.save(bed);
         log.info("Lit '{}' reserve", saved.getBedNumber());
         return saved;
+    }
+
+    // ============================
+    // ASSIGN PATIENT → lit (avec Feign pharmacy-service)
+    // ============================
+
+    /**
+     * Admet un patient dans un lit ET interroge le pharmacy-service
+     * via OpenFeign pour récupérer :
+     *   - l'historique des médicaments délivrés à ce patient
+     *   - les alertes de stock faible en pharmacie
+     *
+     * Retourne une réponse enrichie BedAssignmentResponse.
+     */
+    public BedAssignmentResponse assignPatientWithPharmacyCheck(Long bedId, Long patientId, String patientName) {
+        // 1. Assigner le patient au lit
+        Bed bed = bedRepository.findById(bedId)
+                .orElseThrow(() -> new EntityNotFoundException("Lit introuvable - ID: " + bedId));
+
+        if (!bed.isAvailable()) {
+            throw new IllegalStateException(
+                    "Le lit '" + bed.getBedNumber() + "' n'est pas disponible. Statut: " + bed.getStatus());
+        }
+
+        bed.assignPatient(patientId, patientName);
+        Bed savedBed = bedRepository.save(bed);
+        log.info("Patient '{}' (ID: {}) assigne au lit '{}'", patientName, patientId, savedBed.getBedNumber());
+
+        // 2. Appel OpenFeign → pharmacy-service
+        List<DispensingDto> dispensings = Collections.emptyList();
+        List<MedicationDto> lowStock = Collections.emptyList();
+        boolean pharmacyAvailable = false;
+
+        try {
+            log.info("[Feign] Appel pharmacy-service — historique médicaments patient ID: {}", patientId);
+            dispensings = pharmacyClient.getDispensingsByPatient(patientId);
+
+            log.info("[Feign] Appel pharmacy-service — alertes stock faible");
+            lowStock = pharmacyClient.getLowStockMedications(10);
+
+            pharmacyAvailable = true;
+            log.info("[Feign] pharmacy-service repond : {} dispensing(s), {} alerte(s) stock",
+                    dispensings.size(), lowStock.size());
+
+        } catch (Exception ex) {
+            log.warn("[Feign] pharmacy-service indisponible. Mode dégradé. Cause: {}", ex.getMessage());
+        }
+
+        // 3. Construire la réponse enrichie
+        String message = pharmacyAvailable
+                ? String.format("Patient admis. %d médicament(s) dans l'historique, %d alerte(s) de stock.",
+                    dispensings.size(), lowStock.size())
+                : "Patient admis. Historique pharmacie indisponible (mode dégradé).";
+
+        return BedAssignmentResponse.builder()
+                .bed(savedBed)
+                .patientDispensings(dispensings)
+                .lowStockAlerts(lowStock)
+                .pharmacyServiceAvailable(pharmacyAvailable)
+                .message(message)
+                .build();
     }
 
     // ============================
