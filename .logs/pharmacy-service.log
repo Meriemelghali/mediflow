@@ -94,3 +94,13 @@
 2026-05-03T22:06:07.583+01:00  INFO 24388 --- [pharmacy-service] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
 2026-05-03T22:06:08.832+01:00  INFO 24388 --- [pharmacy-service] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
 2026-05-03T22:06:08.849+01:00  INFO 24388 --- [pharmacy-service] [           main] t.m.p.PharmacyServiceApplication         : Started PharmacyServiceApplication in 17.23 seconds (process running for 19.18)
+2026-05-03T22:11:05.672+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:16:05.694+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:21:05.707+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:26:05.723+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:31:05.735+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:36:05.743+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:41:05.767+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:46:05.793+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:51:05.808+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-05-03T22:56:05.823+01:00  INFO 24388 --- [pharmacy-service] [rap-executor-%d] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
