@@ -12,6 +12,8 @@ import tn.mediflow.pharmacyservice.entity.Dispensing;
 import tn.mediflow.pharmacyservice.entity.Medication;
 import tn.mediflow.pharmacyservice.repository.DispensingRepository;
 import tn.mediflow.pharmacyservice.repository.MedicationRepository;
+import tn.mediflow.pharmacyservice.client.UserClient;
+import tn.mediflow.pharmacyservice.dto.UserDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,11 +27,24 @@ public class DispensingService {
     private final MedicationRepository medicationRepository;
     private final DispensingRepository dispensingRepository;
     private final BillingClient billingClient;
+    private final UserClient userClient;
 
     @Transactional
     public Dispensing dispense(DispensingRequest request) {
         log.info("Starting dispensing for medication {} to patient {}",
                 request.getMedicationId(), request.getPatientId());
+        // ⭐ ÉTAPE 1: Vérifier que le patient existe via user-service (OpenFeign → Node.js)
+        UserDTO patient;
+        try {
+            log.info("📞 Calling user-service to verify patient {}...", request.getPatientId());
+            patient = userClient.getUserByPatientCode(request.getPatientId());
+            log.info("✅ Patient verified via user-service: {} {} (role: {})",
+                    patient.getFirstName(), patient.getLastName(), patient.getRole());
+        } catch (Exception e) {
+            log.error("❌ Patient not found in user-service: {}", request.getPatientId());
+            throw new RuntimeException("Patient not found: " + request.getPatientId() +
+                    " (user-service responded with error)");
+        }
 
         Medication medication = medicationRepository.findById(request.getMedicationId())
                 .orElseThrow(() -> new RuntimeException(
