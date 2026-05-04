@@ -1,0 +1,48 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< tn.mediflow:assurance-service >--------------------
+[INFO] Building assurance-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.13:run (default-cli) > test-compile @ assurance-service >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ assurance-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ assurance-service ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1 source file with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ assurance-service ---
+[INFO] skip non existing resourceDirectory C:\Users\maane\Desktop\projet microservice\mediflow\Backend\services\assurance-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ assurance-service ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 1 source file with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.5.13:run (default-cli) < test-compile @ assurance-service <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.13:run (default-cli) @ assurance-service ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.13)
+
+2026-05-04T16:43:21.409+01:00  INFO 26792 --- [assurance-service] [           main] t.m.a.AssuranceServiceApplication        : Starting AssuranceServiceApplication using Java 17.0.11 with PID 26792 (C:\Users\maane\Desktop\projet microservice\mediflow\Backend\services\assurance-service\target\classes started by maane in C:\Users\maane\Desktop\projet microservice\mediflow\Backend\services\assurance-service)
+2026-05-04T16:43:21.412+01:00  INFO 26792 --- [assurance-service] [           main] t.m.a.AssuranceServiceApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-05-04T16:43:22.827+01:00  INFO 26792 --- [assurance-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8083 (http)
+2026-05-04T16:43:22.851+01:00  INFO 26792 --- [assurance-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-04T16:43:22.852+01:00  INFO 26792 --- [assurance-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.53]
+2026-05-04T16:43:22.939+01:00  INFO 26792 --- [assurance-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-05-04T16:43:22.940+01:00  INFO 26792 --- [assurance-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1468 ms
+2026-05-04T16:43:23.765+01:00  INFO 26792 --- [assurance-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8083 (http) with context path '/'
+2026-05-04T16:43:23.780+01:00  INFO 26792 --- [assurance-service] [           main] t.m.a.AssuranceServiceApplication        : Started AssuranceServiceApplication in 3.166 seconds (process running for 3.631)
