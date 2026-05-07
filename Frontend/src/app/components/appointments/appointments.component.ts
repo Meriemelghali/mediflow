@@ -29,7 +29,7 @@ export class AppointmentsComponent implements OnInit {
     afterNextRender(() => this.load());
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   load() {
     this.loading = true;

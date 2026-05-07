@@ -29,17 +29,17 @@ export class AppointmentFormComponent implements OnInit, OnChanges {
   apiError = '';
 
   statuses: { value: AppointmentStatus; label: string; color: string }[] = [
-    { value: 'SCHEDULED', label: 'Programmé',  color: '#3b82f6' },
-    { value: 'CONFIRMED', label: 'Confirmé',   color: '#10b981' },
-    { value: 'COMPLETED', label: 'Terminé',    color: '#8b5cf6' },
-    { value: 'CANCELLED', label: 'Annulé',     color: '#ef4444' },
+    { value: 'SCHEDULED', label: 'Programmé', color: '#3b82f6' },
+    { value: 'CONFIRMED', label: 'Confirmé', color: '#10b981' },
+    { value: 'COMPLETED', label: 'Terminé', color: '#8b5cf6' },
+    { value: 'CANCELLED', label: 'Annulé', color: '#ef4444' },
   ];
 
   get isEdit(): boolean {
     return !!this.appointment?.id;
   }
 
-  constructor(private fb: FormBuilder, private svc: AppointmentService) {}
+  constructor(private fb: FormBuilder, private svc: AppointmentService) { }
 
   ngOnInit() {
     this.buildForm();

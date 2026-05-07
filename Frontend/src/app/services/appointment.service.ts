@@ -7,7 +7,7 @@ import { Appointment, AppointmentRequest, AppointmentStatus } from '../models/ap
 export class AppointmentService {
   private readonly BASE = 'http://localhost:8082/api/appointments';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAll(): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(this.BASE);
