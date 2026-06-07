@@ -1,9 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+﻿import { Component, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { AssuranceApi } from './assurance.api';
-import { Assurance, AssuranceUpdateRequest } from './assurance.models';
+import { Assurance, AssuranceCreateRequest, AssuranceUpdateRequest } from './assurance.models';
 
 type PatientOption = {
   id: number;
@@ -17,8 +17,9 @@ type PatientOption = {
   templateUrl: './assurance.page.html',
   styleUrl: './assurance.page.css'
 })
-export class AssurancePageComponent {
+export class AssurancePageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly platformId = inject(PLATFORM_ID);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -26,38 +27,42 @@ export class AssurancePageComponent {
 
   assurances = signal<Assurance[]>([]);
   selected = signal<Assurance | null>(null);
+  modalMode = signal<'create' | 'edit' | null>(null);
 
   patients: PatientOption[] = [
-    { id: 1, label: '1 · Hichem B.' },
-    { id: 2, label: '2 · Amina S.' },
-    { id: 3, label: '3 · Selma T.' },
-    { id: 4, label: '4 · Youssef M.' }
+    { id: 1, label: '1 · Test Patient One' },
+    { id: 2, label: '2 · Test Patient Two' }
   ];
 
   activeCount = computed(() => this.assurances().filter(a => a.active).length);
   selectedId = computed(() => this.selected()?.id ?? null);
+  isModalOpen = computed(() => this.modalMode() !== null);
+  isEditMode = computed(() => this.modalMode() === 'edit');
 
   patientSearchForm = this.fb.group({
     patientId: this.fb.nonNullable.control<number | null>(1, [Validators.required, Validators.min(1)])
   });
 
-  createForm = this.fb.group({
+  modalForm = this.fb.group({
     patientId: this.fb.nonNullable.control<number | null>(1, [Validators.required, Validators.min(1)]),
     typeAssurance: this.fb.nonNullable.control('CNAM', [Validators.required, Validators.minLength(2)]),
     tauxRemboursement: this.fb.nonNullable.control<number | null>(0.8, [Validators.required, Validators.min(0), Validators.max(1)]),
     active: this.fb.nonNullable.control(true)
   });
 
-  editForm = this.fb.group({
-    patientId: this.fb.nonNullable.control<number | null>(1, [Validators.required, Validators.min(1)]),
-    typeAssurance: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
-    tauxRemboursement: this.fb.nonNullable.control<number | null>(null, [Validators.required, Validators.min(0), Validators.max(1)]),
-    active: this.fb.nonNullable.control(true)
-  });
-
   constructor(private readonly api: AssuranceApi) {}
 
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.refreshByPatient();
+    }
+  }
+
   patientLabel(patientId: number | null) {
+    if (patientId === null || patientId === undefined) {
+      return 'Aucun patient';
+    }
+
     return this.patients.find(patient => patient.id === patientId)?.label ?? `#${patientId}`;
   }
 
@@ -74,32 +79,71 @@ export class AssurancePageComponent {
         next: list => {
           this.assurances.set(list);
           this.selected.set(list.length ? list[0] : null);
-          if (list.length) this.syncEditFormFromSelected();
+          if (list.length && this.isEditMode()) {
+            this.syncModalFormFromSelected();
+          }
         },
         error: err => this.error.set(this.extractError(err))
       });
   }
 
-  createAssurance() {
+  openCreateModal() {
+    this.modalMode.set('create');
+    this.selected.set(null);
+    this.modalForm.reset({
+      patientId: this.patientSearchForm.value.patientId ?? 1,
+      typeAssurance: 'CNAM',
+      tauxRemboursement: 0.8,
+      active: true
+    });
     this.error.set(null);
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
+  }
+
+  openEditModal(item: Assurance) {
+    this.selected.set(item);
+    this.modalMode.set('edit');
+    this.syncModalFormFromSelected();
+    this.error.set(null);
+  }
+
+  closeModal() {
+    this.modalMode.set(null);
+    this.selected.set(null);
+    this.error.set(null);
+  }
+
+  submitModal() {
+    this.error.set(null);
+    if (this.modalForm.invalid) {
+      this.modalForm.markAllAsTouched();
       return;
     }
 
-    const patientId = this.createForm.value.patientId!;
-    const typeAssurance = this.createForm.value.typeAssurance!;
-    const tauxRemboursement = this.createForm.value.tauxRemboursement!;
-    const active = this.createForm.value.active ?? true;
+    const payload: AssuranceCreateRequest = {
+      patientId: this.modalForm.value.patientId!,
+      typeAssurance: this.modalForm.value.typeAssurance!,
+      tauxRemboursement: this.modalForm.value.tauxRemboursement!,
+      active: this.modalForm.value.active ?? true
+    };
 
+    if (this.isEditMode() && this.selected()) {
+      this.updateAssurance(this.selected()!, payload as AssuranceUpdateRequest);
+      return;
+    }
+
+    this.createAssurance(payload);
+  }
+
+  private createAssurance(payload: AssuranceCreateRequest) {
     this.loading.set(true);
     this.api
-      .create({ patientId, typeAssurance, tauxRemboursement, active })
+      .create(payload)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: created => {
           this.patientSearchForm.patchValue({ patientId: created.patientId });
           this.toast.set('Assurance créée.');
+          this.modalMode.set(null);
           this.refreshByPatient();
         },
         error: err => this.error.set(this.extractError(err))
@@ -117,7 +161,7 @@ export class AssurancePageComponent {
           this.assurances.set(this.assurances().map(a => (a.id === updated.id ? updated : a)));
           if (this.selected()?.id === updated.id) {
             this.selected.set(updated);
-            this.syncEditFormFromSelected();
+            this.syncModalFormFromSelected();
           }
         },
         error: err => this.error.set(this.extractError(err))
@@ -126,26 +170,13 @@ export class AssurancePageComponent {
 
   select(item: Assurance) {
     this.selected.set(item);
-    this.syncEditFormFromSelected();
-    this.error.set(null);
   }
 
-  saveSelected() {
-    this.error.set(null);
-    const selected = this.selected();
-    if (!selected) return;
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      return;
-    }
+  editFromRow(item: Assurance) {
+    this.openEditModal(item);
+  }
 
-    const payload: AssuranceUpdateRequest = {
-      patientId: this.editForm.value.patientId!,
-      typeAssurance: this.editForm.value.typeAssurance!,
-      tauxRemboursement: this.editForm.value.tauxRemboursement!,
-      active: this.editForm.value.active ?? true
-    };
-
+  private updateAssurance(selected: Assurance, payload: AssuranceUpdateRequest) {
     this.loading.set(true);
     this.api
       .update(selected.id, payload)
@@ -155,6 +186,7 @@ export class AssurancePageComponent {
           this.assurances.set(this.assurances().map(a => (a.id === updated.id ? updated : a)));
           this.selected.set(updated);
           this.toast.set('Assurance mise à jour.');
+          this.modalMode.set(null);
         },
         error: err => this.error.set(this.extractError(err))
       });
@@ -172,10 +204,11 @@ export class AssurancePageComponent {
       .subscribe({
         next: () => {
           this.toast.set('Assurance supprimée.');
+          this.modalMode.set(null);
           this.assurances.set(this.assurances().filter(a => a.id !== selected.id));
           const nextSelected = this.assurances()[0] ?? null;
           this.selected.set(nextSelected);
-          this.syncEditFormFromSelected();
+          this.syncModalFormFromSelected();
         },
         error: err => this.error.set(this.extractError(err))
       });
@@ -189,13 +222,14 @@ export class AssurancePageComponent {
     this.toast.set(null);
   }
 
-  private syncEditFormFromSelected() {
+  private syncModalFormFromSelected() {
     const selected = this.selected();
     if (!selected) {
-      this.editForm.reset({ patientId: 1, typeAssurance: '', tauxRemboursement: null, active: true });
+      this.modalForm.reset({ patientId: 1, typeAssurance: 'CNAM', tauxRemboursement: 0.8, active: true });
       return;
     }
-    this.editForm.reset({
+
+    this.modalForm.reset({
       patientId: selected.patientId,
       typeAssurance: selected.typeAssurance,
       tauxRemboursement: selected.tauxRemboursement,

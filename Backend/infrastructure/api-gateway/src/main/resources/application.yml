@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8090
 
 spring:
   application:
@@ -36,7 +36,7 @@ spring:
             - id: assurance-service
               uri: lb://assurance-service
               predicates:
-                - Path=/api/assurance/**
+                - Path=/api/assurance,/api/assurance/**
             - id: notification-service
               uri: lb://notification-service
               predicates:
