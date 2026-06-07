@@ -1,13 +1,9 @@
 import { Routes } from '@angular/router';
+import { AppointmentsComponent } from './components/appointments/appointments.component';
+import { ExamsComponent } from './components/exams/exams.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: 'assurance'
-  },
-  {
-    path: 'assurance',
-    loadComponent: () => import('./assurance/assurance.page').then(m => m.AssurancePageComponent)
-  }
+  { path: '', redirectTo: 'appointments', pathMatch: 'full' },
+  { path: 'appointments', component: AppointmentsComponent },
+  { path: 'exams', component: ExamsComponent },
 ];

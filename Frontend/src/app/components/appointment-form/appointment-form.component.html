@@ -1,0 +1,125 @@
+<div class="form-card">
+
+  <!-- ── Header ── -->
+  <div class="form-header">
+    <div class="fh-left">
+      <div class="fh-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="fh-title">
+          {{ isEdit ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous' }}
+        </h2>
+        <p class="fh-sub">
+          {{ isEdit ? 'Rendez-vous #' + appointment?.id : 'Remplissez les informations ci-dessous' }}
+        </p>
+      </div>
+    </div>
+    <button class="close-btn" type="button" (click)="cancelled.emit()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── Form ── -->
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form-body" novalidate>
+
+    <!-- Patient + Doctor IDs -->
+    <div class="field-row">
+      <div class="field" [class.invalid]="isInvalid('patientId')">
+        <label for="patientId">ID Patient <span class="req">*</span></label>
+        <input id="patientId" type="number" formControlName="patientId"
+               placeholder="ex : 101" min="1" />
+        @if (isInvalid('patientId')) {
+          <span class="err-msg">ID patient requis (≥ 1)</span>
+        }
+      </div>
+      <div class="field" [class.invalid]="isInvalid('doctorId')">
+        <label for="doctorId">ID Médecin <span class="req">*</span></label>
+        <input id="doctorId" type="number" formControlName="doctorId"
+               placeholder="ex : 5" min="1" />
+        @if (isInvalid('doctorId')) {
+          <span class="err-msg">ID médecin requis (≥ 1)</span>
+        }
+      </div>
+    </div>
+
+    <!-- Date & Time -->
+    <div class="field" [class.invalid]="isInvalid('appointmentDate')">
+      <label for="appointmentDate">Date & Heure <span class="req">*</span></label>
+      <input id="appointmentDate" type="datetime-local" formControlName="appointmentDate" />
+      @if (isInvalid('appointmentDate')) {
+        <span class="err-msg">La date est requise</span>
+      }
+    </div>
+
+    <!-- Reason -->
+    <div class="field" [class.invalid]="isInvalid('reason')">
+      <label for="reason">Motif de la consultation <span class="req">*</span></label>
+      <textarea id="reason" formControlName="reason" rows="3"
+                placeholder="Décrivez le motif du rendez-vous…"></textarea>
+      @if (isInvalid('reason')) {
+        <span class="err-msg">Le motif est requis (min. 3 caractères)</span>
+      }
+    </div>
+
+    <!-- Status -->
+    <div class="field">
+      <label for="status">Statut initial</label>
+      <div class="status-selector">
+        @for (s of statuses; track s.value) {
+          <button type="button"
+                  class="status-opt"
+                  [class.selected]="form.get('status')?.value === s.value"
+                  [style.--sc]="s.color"
+                  (click)="form.get('status')?.setValue(s.value)">
+            <span class="opt-dot"></span>
+            {{ s.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="field">
+      <label for="notes">Notes <span class="opt-label">(optionnel)</span></label>
+      <textarea id="notes" formControlName="notes" rows="2"
+                placeholder="Informations complémentaires, allergies, antécédents…"></textarea>
+    </div>
+
+    <!-- API Error -->
+    @if (apiError) {
+      <div class="api-error">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ apiError }}
+      </div>
+    }
+
+    <!-- Footer -->
+    <div class="form-footer">
+      <button type="button" class="btn-cancel" (click)="cancelled.emit()">Annuler</button>
+      <button type="submit" class="btn-submit" [disabled]="submitting">
+        @if (submitting) {
+          <span class="spin"></span>
+          Enregistrement…
+        } @else {
+          {{ isEdit ? 'Mettre à jour' : 'Créer le rendez-vous' }}
+        }
+      </button>
+    </div>
+
+  </form>
+</div>
