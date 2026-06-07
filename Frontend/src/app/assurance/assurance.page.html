@@ -1,0 +1,189 @@
+<div class="assurance-theme">
+  <div class="container">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-text">
+          <div class="brand-title">ASSURANCE</div>
+          <div class="brand-sub">Liste & gestion rapide</div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer card">
+        <div class="kpi">
+          <div class="kpi-label">Assurances</div>
+          <div class="kpi-value">{{ assurances().length }}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Actives</div>
+          <div class="kpi-value">{{ activeCount() }}</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="title">Assurance</div>
+          <div class="subtitle">Ajout, listing et modification sur une seule interface.</div>
+        </div>
+        <div class="topbar-right">
+          <span class="status" [class.status-warning]="loading()" [class.status-success]="!loading()">
+            {{ loading() ? 'TRAITEMENT' : 'PRÊT' }}
+          </span>
+        </div>
+      </header>
+
+      <section class="grid">
+        <div class="card card-large">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Liste des assurances</div>
+              <div class="card-sub">Sélectionne un patient pour afficher ses assurances.</div>
+            </div>
+          </div>
+
+          <form class="form-inline" [formGroup]="patientSearchForm" (ngSubmit)="refreshByPatient()">
+            <label class="select-field">
+              <span>Patient</span>
+              <select class="input" formControlName="patientId">
+                <option *ngFor="let patient of patients" [value]="patient.id">{{ patient.label }}</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit" [disabled]="loading()">Charger</button>
+          </form>
+
+          <div class="error card" *ngIf="error()">
+            <div class="status status-error">ERREUR</div>
+            <div class="error-text">{{ error() }}</div>
+          </div>
+
+          <div class="table">
+            <div class="table-head">
+              <div>Assurance</div>
+              <div>Patient</div>
+              <div>Taux</div>
+              <div>Statut</div>
+              <div class="actions-col">Action</div>
+            </div>
+
+            <div
+              class="table-row"
+              *ngFor="let a of assurances(); trackBy: trackById"
+              (click)="select(a)"
+              [class.row-selected]="selectedId() === a.id"
+            >
+              <div>{{ a.typeAssurance }}</div>
+              <div>{{ patientLabel(a.patientId) }}</div>
+              <div>{{ a.tauxRemboursement }}</div>
+              <div>
+                <span class="status" [class.status-success]="a.active" [class.status-warning]="!a.active">
+                  {{ a.active ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="actions-col">
+                <button class="btn btn-outline" type="button" (click)="toggleActive(a); $event.stopPropagation()" [disabled]="loading()">
+                  {{ a.active ? 'Désactiver' : 'Activer' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty" *ngIf="!loading() && assurances().length === 0">
+            Liste vide. Choisis un patient puis charge.
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Ajouter une assurance</div>
+                <div class="card-sub">Formulaire d’ajout avec dropdown patient.</div>
+              </div>
+            </div>
+
+            <form class="form" [formGroup]="createForm" (ngSubmit)="createAssurance()">
+              <label class="select-field">
+                <span>Patient</span>
+                <select class="input" formControlName="patientId">
+                  <option *ngFor="let patient of patients" [value]="patient.id">{{ patient.label }}</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <div class="field-label">Type d’assurance</div>
+                <input class="input" type="text" formControlName="typeAssurance" />
+              </label>
+
+              <label class="field">
+                <div class="field-label">Taux de remboursement</div>
+                <input class="input" type="number" step="0.01" min="0" max="1" formControlName="tauxRemboursement" />
+              </label>
+
+              <label class="toggle">
+                <input type="checkbox" formControlName="active" />
+                <span>Active</span>
+              </label>
+
+              <div class="actions">
+                <button class="btn btn-primary" type="submit" [disabled]="loading()">Créer</button>
+                <button class="btn btn-outline" type="button" (click)="createForm.reset({patientId: 1, typeAssurance: 'CNAM', tauxRemboursement: 0.8, active: true}); error.set(null)">
+                  Réinitialiser
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Modifier une assurance</div>
+                <div class="card-sub">Sélectionne une assurance pour l’éditer.</div>
+              </div>
+              <span class="status status-warning" *ngIf="!selected()">Aucune sélection</span>
+            </div>
+
+            <form class="form" [formGroup]="editForm" (ngSubmit)="saveSelected()">
+              <label class="select-field">
+                <span>Patient</span>
+                <select class="input" formControlName="patientId" [disabled]="!selected()">
+                  <option *ngFor="let patient of patients" [value]="patient.id">{{ patient.label }}</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <div class="field-label">Type d’assurance</div>
+                <input class="input" type="text" formControlName="typeAssurance" [disabled]="!selected()" />
+              </label>
+
+              <label class="field">
+                <div class="field-label">Taux de remboursement</div>
+                <input class="input" type="number" step="0.01" min="0" max="1" formControlName="tauxRemboursement" [disabled]="!selected()" />
+              </label>
+
+              <label class="toggle">
+                <input type="checkbox" formControlName="active" [disabled]="!selected()" />
+                <span>Active</span>
+              </label>
+
+              <div class="actions">
+                <button class="btn btn-primary" type="submit" [disabled]="loading() || !selected()">Enregistrer</button>
+                <button class="btn btn-outline" type="button" (click)="deleteSelected()" [disabled]="loading() || !selected()">
+                  Supprimer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="toast" *ngIf="toast()" (click)="dismissToast()">
+  <div class="toast-inner">
+    <span class="status status-success">OK</span>
+    <span class="toast-text">{{ toast() }}</span>
+  </div>
+</div>

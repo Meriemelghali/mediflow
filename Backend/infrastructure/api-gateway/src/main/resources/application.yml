@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: user-service
+            uri: lb://user-service
+            predicates:
+                - Path=/api/user/**
+          - id: pharmacy-service
+            uri: lb://pharmacy-service
+            predicates:
+              - Path=/api/pharmacy/**
+          - id: billing-service
+            uri: lb://billing-service
+            predicates:
+              - Path=/api/billing/**
+          - id: appointment-service
+            uri: lb://appointment-service
+            predicates:
+              - Path=/api/appointments/**
+          - id: exam-service
+            uri: lb://exam-service
+            predicates:
+              - Path=/api/exams/**
+          - id: room-service
+            uri: lb://room-service
+            predicates:
+              - Path=/api/rooms/**
+          - id: assurance-service
+            uri: lb://assurance-service
+            predicates:
+              - Path=/api/assurance/**
+          - id: notification-service
+            uri: lb://notification-service
+            predicates:
+              - Path=/api/notifications/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
