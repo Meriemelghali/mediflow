@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, afterNextRender } from '@angular/core';
+import { Component, OnDestroy, afterNextRender } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 
@@ -9,11 +9,11 @@ import { interval, Subscription } from 'rxjs';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnDestroy {
   currentTime = new Date();
   private clockSub?: Subscription;
 
-  ngOnInit() {
+  constructor() {
     afterNextRender(() => {
       this.clockSub = interval(1000).subscribe(() => {
         this.currentTime = new Date();

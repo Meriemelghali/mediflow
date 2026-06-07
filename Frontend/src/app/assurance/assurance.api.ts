@@ -10,7 +10,7 @@ export class AssuranceApi {
   constructor(private readonly http: HttpClient) {}
 
   create(payload: AssuranceCreateRequest): Observable<Assurance> {
-    return this.http.post<Assurance>(`${this.baseUrl}/`, payload);
+    return this.http.post<Assurance>(this.baseUrl, payload);
   }
 
   getById(id: number): Observable<Assurance> {
