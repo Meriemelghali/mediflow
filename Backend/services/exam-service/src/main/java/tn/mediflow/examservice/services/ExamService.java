@@ -1,6 +1,9 @@
 package tn.mediflow.examservice.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import tn.mediflow.examservice.clients.BillingClient;
 import tn.mediflow.examservice.clients.PatientClient;
@@ -23,39 +26,51 @@ public class ExamService {
     private final ResultatRepository resultatRepository;
     private final PatientClient patientClient;
     private final BillingClient billingClient;
+
     public Examen createExamen(Examen examen) {
-        // Démonstration OpenFeign : Vérifier l'existence du patient avant de créer l'examen
-        //try {
-        //    patientClient.getPatientById(examen.getPatientId());
-       // } catch (Exception e) {
-            // Si le service patient n'est pas dispo ou patient introuvable, on log l'erreur 
-            // mais on peut décider de continuer ou bloquer. Ici on bloque pour la démo.
-        //    throw new RuntimeException("Communication Feign échouée ou Patient introuvable : " + e.getMessage());
-       // }
+        // Démonstration OpenFeign : Vérification via le service patient
+        try {
+            patientClient.getPatientById(examen.getPatientId());
+        } catch (Exception e) {
+            System.err.println("Note: Communication Feign avec user-service échouée ou patient introuvable.");
+        }
         
         examen.setDateExamen(LocalDateTime.now());
         if (examen.getStatus() == null) {
             examen.setStatus(ExamStatus.PLANIFIE);
         }
-        return examenRepository.save(examen);
+        Examen saved = examenRepository.save(examen);
+        triggerBilling(saved);
+        return saved;
     }
 
-    // Nouvelle méthode pour démontrer la récupération de données jointes entre services
     public ExamResponseDTO getExamWithPatient(Long id) {
         Examen examen = getExamById(id);
         Patient patient = null;
+        List<BillDTO> bills = null;
         
         try {
-            // Appel synchrone vers le microservice patient
             patient = patientClient.getPatientById(examen.getPatientId());
         } catch (Exception e) {
-            // Fallback simple : si le service patient est down, on retourne l'examen sans les détails du patient
-            System.err.println("Erreur lors de la récupération du patient via Feign: " + e.getMessage());
+            System.err.println("Erreur Feign Patient: " + e.getMessage());
         }
-        
+
+        try {
+            List<BillDTO> allBills = billingClient.getAllBills();
+            if (allBills != null) {
+                String reference = "EXAM-" + examen.getId();
+                bills = allBills.stream()
+                        .filter(b -> reference.equals(b.getReference()))
+                        .toList();
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur Feign Billing: " + e.getMessage());
+        }
+
         return ExamResponseDTO.builder()
                 .examen(examen)
                 .patient(patient)
+                .bills(bills)
                 .build();
     }
 
@@ -66,7 +81,9 @@ public class ExamService {
         if (updatedExamen.getStatus() != null) {
             existing.setStatus(updatedExamen.getStatus());
         }
-        return examenRepository.save(existing);
+        Examen saved = examenRepository.save(existing);
+        triggerBilling(saved);
+        return saved;
     }
 
     public void deleteExamen(Long id) {
@@ -78,42 +95,52 @@ public class ExamService {
         Examen existing = getExamById(id);
         existing.setStatus(status);
         Examen saved = examenRepository.save(existing);
-        
-        // Démonstration OpenFeign : Si l'examen est terminé, on génère une facture
-        if (status == ExamStatus.TERMINE) {
+        triggerBilling(saved);
+        return saved;
+    }
+
+    private void triggerBilling(Examen examen) {
+        if (examen.getStatus() == ExamStatus.TERMINE) {
             try {
-                BillDTO bill = BillDTO.builder()
-                        .reference("EXAM-" + saved.getId())
-                        .montantTotal(50.0)
-                        .statut("NON_PAYE")
-                        .build();
+                String reference = "EXAM-" + examen.getId();
                 
-                billingClient.createBill(bill);
-                System.out.println("Facture envoyée au service billing pour le patient " + saved.getPatientId());
+                // Éviter les doublons : vérifier si une facture existe déjà
+                boolean alreadyBilled = false;
+                try {
+                    List<BillDTO> allBills = billingClient.getAllBills();
+                    if (allBills != null) {
+                        alreadyBilled = allBills.stream()
+                                .anyMatch(b -> reference.equals(b.getReference()));
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur vérification doublons billing: " + e.getMessage());
+                }
+
+                if (!alreadyBilled) {
+                    BillDTO bill = BillDTO.builder()
+                            .reference(reference)
+                            .montantTotal(50.0)
+                            .statut("NON_PAYE")
+                            .build();
+                    billingClient.createBill(bill);
+                }
             } catch (Exception e) {
-                System.err.println("Échec de la communication avec le service Billing : " + e.getMessage());
+                System.err.println("Échec de la facturation via Feign: " + e.getMessage());
             }
         }
-        
-        return saved;
     }
 
     public Resultat addResultat(Long examenId, Resultat resultat) {
         Examen examen = getExamById(examenId);
-        
         if (examen.getStatus() == ExamStatus.ANNULE) {
             throw new RuntimeException("Impossible d'ajouter un résultat à un examen annulé");
         }
-        
         resultat.setExamen(examen);
         Resultat saved = resultatRepository.save(resultat);
-        
-        // Mettre à jour le statut de l'examen si c'est le premier résultat
         if (examen.getStatus() == ExamStatus.PLANIFIE) {
             examen.setStatus(ExamStatus.EN_COURS);
             examenRepository.save(examen);
         }
-        
         return saved;
     }
 
@@ -137,6 +164,20 @@ public class ExamService {
 
     public List<Examen> getExamsByPatient(Long patientId) {
         return examenRepository.findByPatientId(patientId);
+    }
+
+    public Page<Examen> searchExams(String keyword, ExamStatus status, Long patientId, Pageable pageable) {
+        Specification<Examen> spec = Specification.where(null);
+        if (keyword != null && !keyword.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("nomExamen")), "%" + keyword.toLowerCase() + "%"));
+        }
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (patientId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("patientId"), patientId));
+        }
+        return examenRepository.findAll(spec, pageable);
     }
 
     public Examen getExamById(Long id) {

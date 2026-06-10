@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import tn.mediflow.examservice.dto.Patient;
 
-@FeignClient(name = "patient-service")
+@FeignClient(name = "user-service")
 public interface PatientClient {
-    @GetMapping("/patients/{id}")
+    @GetMapping("/api/user/api/patients/{id}")
     Patient getPatientById(@PathVariable("id") Long id);
 }
