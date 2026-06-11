@@ -1,9 +1,11 @@
-package tn.mediflow.roomservice.feign;
+package tn.mediflow.roomservice.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import tn.mediflow.roomservice.dto.DispensingDto;
+import tn.mediflow.roomservice.dto.MedicationDto;
 
 import java.util.List;
 

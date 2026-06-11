@@ -3,7 +3,6 @@ package tn.mediflow.billingservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.util.List;
 
 @Entity

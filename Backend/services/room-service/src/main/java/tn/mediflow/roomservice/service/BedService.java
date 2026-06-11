@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.mediflow.roomservice.entity.Bed;
 import tn.mediflow.roomservice.entity.Room;
-import tn.mediflow.roomservice.feign.BedAssignmentResponse;
-import tn.mediflow.roomservice.feign.DispensingDto;
-import tn.mediflow.roomservice.feign.MedicationDto;
-import tn.mediflow.roomservice.feign.PharmacyClient;
+import tn.mediflow.roomservice.dto.BedAssignmentResponse;
+import tn.mediflow.roomservice.dto.DispensingDto;
+import tn.mediflow.roomservice.dto.MedicationDto;
+import tn.mediflow.roomservice.client.PharmacyClient;
 import tn.mediflow.roomservice.repository.BedRepository;
 import tn.mediflow.roomservice.repository.RoomRepository;
 
