@@ -1,8 +1,8 @@
 import { Component, OnInit, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppointmentService } from '../../services/appointment.service';
-import { Appointment, AppointmentStatus } from '../../models/appointment.model';
+import { AppointmentService } from '../appointment.service';
+import { Appointment, AppointmentStatus } from '../appointment.model';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 
 @Component({
@@ -35,12 +35,11 @@ export class AppointmentsComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.appointmentService.getAll().subscribe({
-      next: (data) => {
-        this.appointments = data.sort(
-          (a, b) =>
-            new Date(b.appointmentDate).getTime() -
-            new Date(a.appointmentDate).getTime()
-        );
+      next: (data: any) => {
+        this.appointments = data.sort((a: any, b: any) => {
+          return new Date(b.appointmentDate).getTime() -
+            new Date(a.appointmentDate).getTime();
+        });
         this.applyFilters();
         this.loading = false;
       },

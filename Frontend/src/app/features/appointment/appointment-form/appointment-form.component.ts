@@ -9,8 +9,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AppointmentService } from '../../services/appointment.service';
-import { Appointment, AppointmentRequest, AppointmentStatus } from '../../models/appointment.model';
+import { AppointmentService } from '../appointment.service';
+import { Appointment, AppointmentRequest, AppointmentStatus } from '../appointment.model';
 
 @Component({
   selector: 'app-appointment-form',
@@ -115,7 +115,7 @@ export class AppointmentFormComponent implements OnInit, OnChanges {
         this.submitting = false;
         this.saved.emit();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.submitting = false;
         if (err?.status === 0) {
           this.apiError =
