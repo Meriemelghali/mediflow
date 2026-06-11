@@ -16,7 +16,9 @@
     "dotenv": "^17.4.2",
     "eureka-js-client": "^4.5.0",
     "express": "^5.2.1",
-    "mongoose": "^5.13.22"
+    "mongoose": "^5.13.22",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
