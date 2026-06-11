@@ -39,4 +39,14 @@ public class FactureController {
 
         return factureService.updateFacture(id, facture);
     }
+
+    @PostMapping("/from-appointment/{id}")
+    public Facture createFromAppointment(@PathVariable Long id) {
+        return factureService.createFactureFromAppointment(id);
+    }
+
+    @PostMapping("/from-room/{id}")
+    public Facture createFromRoom(@PathVariable Long id, @RequestParam int days) {
+        return factureService.createFactureFromRoom(id, days);
+    }
 }
