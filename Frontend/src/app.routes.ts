@@ -34,6 +34,10 @@ export const routes: Routes = [
         path: 'pharmacy',
         loadComponent: () => import('./app/features/pharmacy/pharmacy.component').then(m => m.PharmacyComponent)
       },
+      {
+        path: 'billing',
+        loadComponent: () => import('./app/features/billing/billing.component').then(m => m.BillingComponent)
+      },
     ]
   },
 ];

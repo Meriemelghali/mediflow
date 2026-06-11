@@ -1,0 +1,336 @@
+<div class="dashboard-container">
+  <!-- ── Header ── -->
+  <div class="header-section">
+    <div>
+      <h1>Gestion de la Facturation</h1>
+      <p class="subtitle">Suivi des factures, paiements et règlements MediFlow</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Nouvelle Facture
+    </button>
+  </div>
+
+  <!-- ── Stats Grid ── -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon icon-blue">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Nombre de Factures</span>
+        <span class="stat-value">{{ factures.length }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-purple">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Montant Total Facturé</span>
+        <span class="stat-value">{{ totalBilled | number:'1.2-2' }} DT</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-green">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Montant Total Réglé</span>
+        <span class="stat-value text-success">{{ totalPaid | number:'1.2-2' }} DT</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-orange">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Reste à Recouvrer</span>
+        <span class="stat-value text-warning">{{ totalPending | number:'1.2-2' }} DT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filters ── -->
+  <div class="filters-card">
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" [(ngModel)]="searchKeyword" (input)="filterFactures()" placeholder="Rechercher par référence...">
+    </div>
+    <div class="filter-box">
+      <select [(ngModel)]="statusFilter" (change)="filterFactures()">
+        <option value="">Tous les statuts</option>
+        <option value="PAYEE">Payée</option>
+        <option value="EN_ATTENTE">En attente</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Invoices Table ── -->
+  <div class="table-container" [class.loading]="loading">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Référence</th>
+          <th>Montant Total</th>
+          <th>Statut</th>
+          <th>Paiements</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let f of filteredFactures" class="fade-in">
+          <td><span class="text-tertiary">#</span>{{ f.id }}</td>
+          <td class="bold">{{ f.reference }}</td>
+          <td>{{ f.montantTotal | number:'1.2-2' }} DT</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(f.statut)">
+              <span class="status-dot-mini"></span>
+              {{ getFriendlyStatus(f.statut) }}
+            </span>
+          </td>
+          <td>
+            <span class="text-secondary" style="font-size: 0.9rem;">
+              {{ getPaymentsCount(f) }} paiement(s)
+            </span>
+          </td>
+          <td class="actions-cell">
+            <button class="btn-icon" (click)="openDetailsModal(f)" title="Détails & Paiements">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </button>
+            <button class="btn-icon delete" (click)="deleteFacture(f.id!)" title="Supprimer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredFactures.length === 0 && !loading">
+          <td colspan="6" class="empty-state">Aucune facture enregistrée pour le moment.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Modal Création Facture ── -->
+<div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Créer une Facture</h2>
+      <button class="close-btn" (click)="closeCreateModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="tabs-container">
+      <button class="tab-btn" [class.active]="createMode === 'manual'" (click)="setCreateMode('manual')">Manuelle</button>
+      <button class="tab-btn" [class.active]="createMode === 'appointment'" (click)="setCreateMode('appointment')">Rendez-vous</button>
+      <button class="tab-btn" [class.active]="createMode === 'room'" (click)="setCreateMode('room')">Chambre d'Hôpital</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- 1. Formulaire Manuel -->
+      <div *ngIf="createMode === 'manual'" class="form-fade">
+        <div class="form-group">
+          <label>Référence Facture</label>
+          <div class="input-wrapper">
+            <input type="text" [(ngModel)]="newFacture.reference" placeholder="ex: FAC-2026-0001">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Montant Total (DT)</label>
+          <div class="input-wrapper">
+            <input type="number" [(ngModel)]="newFacture.montantTotal" placeholder="ex: 150.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Statut Initial</label>
+          <div class="input-wrapper">
+            <select [(ngModel)]="newFacture.statut">
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="PAYEE">Payée</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Génération depuis Rendez-vous -->
+      <div *ngIf="createMode === 'appointment'" class="form-fade">
+        <p class="form-info-text">
+          Saisissez l'ID d'un rendez-vous pour générer automatiquement une facture associée basée sur le prix du rendez-vous.
+        </p>
+        <div class="form-group">
+          <label>ID du Rendez-vous</label>
+          <div class="input-wrapper">
+            <input type="number" [(ngModel)]="appointmentSvcId" placeholder="ex: 12">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Génération depuis une Chambre -->
+      <div *ngIf="createMode === 'room'" class="form-fade">
+        <p class="form-info-text">
+          Générez une facture basée sur le séjour dans une chambre. Le prix sera calculé automatiquement selon le type de chambre.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>ID de la Chambre</label>
+            <div class="input-wrapper">
+              <input type="number" [(ngModel)]="roomSvcId" placeholder="ex: 3">
+            </div>
+          </div>
+          <div class="form-group" style="max-width: 120px;">
+            <label>Nombre de Jours</label>
+            <div class="input-wrapper">
+              <input type="number" [(ngModel)]="roomDays" placeholder="ex: 5">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeCreateModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="submitCreateFacture()">Confirmer la création</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Détails & Paiement ── -->
+<div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+  <div class="modal-card wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Détails de la Facture : {{ selectedFacture?.reference }}</h2>
+      <button class="close-btn" (click)="closeDetailsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="details-grid">
+        <!-- Infos Facture -->
+        <div class="detail-section local">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Informations Générales
+          </h3>
+          <p><strong>Identifiant :</strong> <span class="text-tertiary">#{{ selectedFacture?.id }}</span></p>
+          <p><strong>Référence :</strong> {{ selectedFacture?.reference }}</p>
+          <p><strong>Montant Total :</strong> {{ selectedFacture?.montantTotal | number:'1.2-2' }} DT</p>
+          <p>
+            <strong>Statut :</strong>
+            <span class="badge" [ngClass]="getStatusClass(selectedFacture?.statut || '')">
+              {{ getFriendlyStatus(selectedFacture?.statut || '') }}
+            </span>
+          </p>
+          <p><strong>Total Réglé :</strong> {{ getPaidSum() | number:'1.2-2' }} DT</p>
+          <p><strong>Reste dû :</strong> <span [class.text-success]="getRemainingDue() <= 0" [class.text-warning]="getRemainingDue() > 0">{{ getRemainingDue() | number:'1.2-2' }} DT</span></p>
+
+          <!-- Changement de statut direct -->
+          <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-tertiary);">Modifier le Statut de la Facture :</label>
+            <div class="input-wrapper" style="margin-top: 0.5rem;">
+              <select [ngModel]="selectedFacture?.statut" (ngModelChange)="updateStatusDirect($event)">
+                <option value="EN_ATTENTE">En attente</option>
+                <option value="PAYEE">Payée</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique & Formulaire de Paiement -->
+        <div class="detail-section remote">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Historique des Paiements
+          </h3>
+          
+          <div class="payments-history">
+            <div *ngFor="let p of selectedFacture?.paiements" class="payment-mini-item fade-in">
+              <div class="payment-details">
+                <span class="bold">{{ p.montant | number:'1.2-2' }} DT</span>
+                <span class="payment-method badge-payment">{{ p.methodePaiement }}</span>
+              </div>
+              <span class="text-tertiary" style="font-size: 0.85rem;">{{ p.datePaiement | date:'dd MMM yyyy' }}</span>
+            </div>
+            <p *ngIf="!selectedFacture?.paiements || selectedFacture?.paiements?.length === 0" class="empty-state">
+              Aucun règlement enregistré pour le moment.
+            </p>
+          </div>
+
+          <!-- Formulaire d'ajout de paiement -->
+          <div *ngIf="getRemainingDue() > 0" class="add-payment-section">
+            <h4>Enregistrer un règlement</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Montant (DT)</label>
+                <input type="number" [(ngModel)]="newPayment.montant" placeholder="ex: 50.00">
+              </div>
+              <div class="form-group">
+                <label>Méthode</label>
+                <select [(ngModel)]="newPayment.methodePaiement">
+                  <option value="CASH">Espèces</option>
+                  <option value="CARD">Carte Bancaire</option>
+                  <option value="CHEQUE">Chèque</option>
+                  <option value="VIREMENT">Virement</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" (click)="submitAddPayment()" style="align-self: flex-end; padding: 0.65rem 1rem;">
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="closeDetailsModal()">Fermer</button>
+    </div>
+  </div>
+</div>
