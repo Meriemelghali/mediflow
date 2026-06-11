@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import tn.mediflow.roomservice.entity.Bed;
-import tn.mediflow.roomservice.feign.BedAssignmentResponse;
+import tn.mediflow.roomservice.dto.BedAssignmentResponse;
 import tn.mediflow.roomservice.service.BedService;
 
 @RestController

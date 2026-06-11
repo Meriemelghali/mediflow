@@ -1,4 +1,4 @@
-package tn.mediflow.roomservice.feign;
+package tn.mediflow.roomservice.dto;
 
 import lombok.*;
 import java.math.BigDecimal;

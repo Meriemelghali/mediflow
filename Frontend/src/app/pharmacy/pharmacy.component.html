@@ -1,0 +1,396 @@
+<div class="page pharmacy-page">
+  <!-- ── Header ── -->
+  <header class="page-header hero-shell">
+    <div class="header-copy">
+      <div class="eyebrow">Service Pharmacie</div>
+      <h1 class="page-title">Gestion de la pharmacie</h1>
+      <p class="page-subtitle">
+        Suivi des stocks de médicaments, approvisionnement et distribution aux patients hospitalisés ou consultés.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-secondary" type="button" (click)="loadAll()" [disabled]="loading()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 3v6h-6" />
+        </svg>
+        Rafraîchir
+      </button>
+      <button class="btn-secondary" type="button" (click)="openDispenseModal()" [disabled]="loading()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          <path d="M9 12h6" />
+          <path d="M12 9v6" />
+        </svg>
+        Distribuer
+      </button>
+      <button class="btn-primary" type="button" (click)="openCreateModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14" />
+          <path d="M5 12h14" />
+        </svg>
+        Nouveau médicament
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Stats Grid ── -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card-primary">
+      <span class="stat-label">Médicaments enregistrés</span>
+      <span class="stat-number">{{ totalMedicationsCount() }}</span>
+      <p class="stat-note">Références uniques en base.</p>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label">Rupture / Stock faible</span>
+      <span class="stat-number" [class.stat-number-warning]="lowStockCount() > 0" [class.stat-number-success]="lowStockCount() === 0">
+        {{ lowStockCount() }}
+      </span>
+      <p class="stat-note">Quantité inférieure au seuil limite (10).</p>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label">Distributions exécutées</span>
+      <span class="stat-number stat-number-info">{{ totalDispensingsCount() }}</span>
+      <p class="stat-note">Ordonnances délivrées aux patients.</p>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label">Valeur totale du stock</span>
+      <span class="stat-number stat-number-sm">{{ totalPharmacyValue() | currency:'TND':'symbol':'1.2-2' }}</span>
+      <p class="stat-note">Somme des prix unitaires × stock disponible.</p>
+    </div>
+  </div>
+
+  <!-- ── Tabs Navigation ── -->
+  <div class="tabs-nav-container">
+    <button class="tab-btn" [class.active]="activeTab() === 'medications'" (click)="setTab('medications')">
+      Stock de médicaments
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'dispensings'" (click)="setTab('dispensings')">
+      Log des distributions
+    </button>
+  </div>
+
+  <!-- ── Toolbars ── -->
+  <div class="toolbar card-shell">
+    <!-- Medications Toolbar -->
+    <div *ngIf="activeTab() === 'medications'" class="toolbar-content">
+      <div class="toolbar-search-filters">
+        <label class="field search-field">
+          <span class="field-label">Rechercher</span>
+          <input class="input" type="text" placeholder="Rechercher par nom, fabricant..." [value]="medicationSearch()" (input)="updateSearch($event)" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Catégorie</span>
+          <select class="input" [value]="categoryFilter()" (change)="updateCategory($event)">
+            <option value="">Toutes</option>
+            <option *ngFor="let cat of categories()" [value]="cat">{{ cat }}</option>
+          </select>
+        </label>
+
+        <label class="toggle-field checkbox-filter">
+          <input type="checkbox" [checked]="lowStockOnly()" (change)="toggleLowStock($event)" />
+          <div>
+            <span class="toggle-title">Stock critique</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="toolbar-meta">
+        <span class="meta-pill" [class.meta-loading]="loading()">
+          {{ loading() ? 'Chargement...' : 'Prêt' }}
+        </span>
+        <span class="meta-text">Affichage de {{ filteredMedications().length }} médicament(s)</span>
+      </div>
+    </div>
+
+    <!-- Dispensings Toolbar -->
+    <div *ngIf="activeTab() === 'dispensings'" class="toolbar-content">
+      <div class="toolbar-search-filters">
+        <label class="field">
+          <span class="field-label">Filtrer par patient</span>
+          <select class="input" [value]="dispensingPatientFilter() ?? ''" (change)="updatePatientFilter($event)">
+            <option value="">Tous les patients</option>
+            <option *ngFor="let patient of patients()" [value]="patient.id">{{ patient.label }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="toolbar-meta">
+        <span class="meta-pill" [class.meta-loading]="loading()">
+          {{ loading() ? 'Chargement...' : 'Prêt' }}
+        </span>
+        <span class="meta-text">Affichage de {{ filteredDispensings().length }} distribution(s)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Error banner ── -->
+  <div class="error-banner" *ngIf="error()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="content-grid">
+    <!-- Medications Table -->
+    <section *ngIf="activeTab() === 'medications'" class="card-shell table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Médicament</th>
+              <th>Catégorie</th>
+              <th>Prix Unitaire</th>
+              <th>Stock</th>
+              <th>Fabricant</th>
+              <th>Date d'expiration</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let med of filteredMedications()" class="row">
+              <td>
+                <div class="row-title">{{ med.name }}</div>
+                <div class="row-sub" *ngIf="med.description">{{ med.description }}</div>
+                <div class="row-sub">ID #{{ med.id }}</div>
+              </td>
+              <td>
+                <span class="category-badge">{{ med.category }}</span>
+              </td>
+              <td>
+                <span class="price-text">{{ med.unitPrice | currency:'TND':'symbol':'1.2-2' }}</span>
+              </td>
+              <td>
+                <span class="status" 
+                      [class.status-success]="med.currentStock >= 20" 
+                      [class.status-warning]="med.currentStock < 20 && med.currentStock >= 10" 
+                      [class.status-danger]="med.currentStock < 10">
+                  {{ med.currentStock }} unités
+                </span>
+              </td>
+              <td>
+                <span>{{ med.manufacturer || 'Non spécifié' }}</span>
+              </td>
+              <td>
+                <span>{{ med.expirationDate ? (med.expirationDate | date:'mediumDate') : 'Indéterminée' }}</span>
+              </td>
+              <td class="actions-col">
+                <div class="row-actions">
+                  <button class="btn-secondary btn-icon" type="button" title="Modifier" (click)="openEditModal(med)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+                  <button class="btn-primary btn-icon" type="button" title="Distribuer" (click)="openDispenseModal(med)" [disabled]="med.currentStock === 0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 12h6"></path><path d="M12 9v6"></path></svg>
+                  </button>
+                  <button class="btn-danger btn-icon" type="button" title="Supprimer" (click)="deleteMedication(med.id!)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!loading() && filteredMedications().length === 0">
+              <td colspan="7" class="empty-state">
+                <div class="empty-title">Aucun médicament trouvé</div>
+                <div class="empty-copy">Modifiez vos critères de recherche ou enregistrez un nouveau produit pour commencer.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Dispensings Table -->
+    <section *ngIf="activeTab() === 'dispensings'" class="card-shell table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID Distribution</th>
+              <th>Médicament</th>
+              <th>Patient</th>
+              <th>Quantité</th>
+              <th>Montant Total</th>
+              <th>Date de Distribution</th>
+              <th>Facture ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let disp of filteredDispensings()" class="row">
+              <td>
+                <span class="disp-id">#{{ disp.id }}</span>
+              </td>
+              <td>
+                <span class="row-title">{{ getMedicationName(disp.medicationId) }}</span>
+                <span class="row-sub d-block">ID Méd. #{{ disp.medicationId }}</span>
+              </td>
+              <td>
+                <span class="patient-cell">{{ getPatientLabel(disp.patientId) }}</span>
+              </td>
+              <td>
+                <span class="qty-badge">{{ disp.quantity }} unités</span>
+              </td>
+              <td>
+                <span class="price-text">{{ disp.totalAmount | currency:'TND':'symbol':'1.2-2' }}</span>
+              </td>
+              <td>
+                <span>{{ disp.dispensingDate | date:'medium' }}</span>
+              </td>
+              <td>
+                <span *ngIf="disp.invoiceId" class="invoice-pill">Facture #{{ disp.invoiceId }}</span>
+                <span *ngIf="!disp.invoiceId" class="no-invoice">Non facturé</span>
+              </td>
+            </tr>
+            <tr *ngIf="!loading() && filteredDispensings().length === 0">
+              <td colspan="7" class="empty-state">
+                <div class="empty-title">Aucune distribution enregistrée</div>
+                <div class="empty-copy">Distribuez des médicaments aux patients depuis l'onglet Stock ou le bouton Distribuer en haut.</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Modal Medication (Create/Edit) ── -->
+  <div class="modal-backdrop" *ngIf="isModalOpen() && !isDispenseMode()" (click)="closeModal()">
+    <section class="modal-card" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div>
+          <div class="eyebrow">{{ isEditMode() ? 'Modification' : 'Création' }}</div>
+          <h2 class="modal-title">{{ isEditMode() ? 'Modifier le médicament' : 'Nouveau médicament' }}</h2>
+          <p class="modal-subtitle">
+            Saisissez les informations techniques et les quantités en stock pour ce produit.
+          </p>
+        </div>
+        <button class="icon-button" type="button" (click)="closeModal()" aria-label="Fermer la popup">×</button>
+      </header>
+
+      <form class="modal-form" [formGroup]="medicationForm" (ngSubmit)="submitMedication()">
+        <label class="field">
+          <span class="field-label">Nom du médicament *</span>
+          <input class="input" type="text" formControlName="name" placeholder="Ex : Paracétamol 500mg" />
+          <span class="error-msg" *ngIf="medicationForm.controls.name.touched && medicationForm.controls.name.errors?.['required']">Le nom est obligatoire.</span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Catégorie *</span>
+          <select class="input" formControlName="category">
+            <option value="Antalgique">Antalgique</option>
+            <option value="Antibiotique">Antibiotique</option>
+            <option value="Anti-inflammatoire">Anti-inflammatoire</option>
+            <option value="Antiseptique">Antiseptique</option>
+            <option value="Anesthésique">Anesthésique</option>
+            <option value="Cardiologie">Cardiologie</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Prix unitaire (TND) *</span>
+          <input class="input" type="number" step="0.01" min="0" formControlName="unitPrice" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Stock initial *</span>
+          <input class="input" type="number" step="1" min="0" formControlName="currentStock" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Fabricant / Laboratoire</span>
+          <input class="input" type="text" formControlName="manufacturer" placeholder="Ex : Opalia, Pfizer..." />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Date de péremption</span>
+          <input class="input" type="date" formControlName="expirationDate" />
+        </label>
+
+        <label class="field desc-field">
+          <span class="field-label">Description / Posologie recommandée</span>
+          <textarea class="input" formControlName="description" rows="3" placeholder="Description du médicament, dosage typique..."></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" type="button" (click)="closeModal()">Annuler</button>
+          <button class="btn-danger" type="button" *ngIf="isEditMode() && selectedMedication()" (click)="deleteMedication(selectedMedication()!.id!)" [disabled]="loading()">
+            Supprimer
+          </button>
+          <button class="btn-primary" type="submit" [disabled]="loading()">
+            {{ isEditMode() ? 'Enregistrer' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ── Modal Dispense ── -->
+  <div class="modal-backdrop" *ngIf="isModalOpen() && isDispenseMode()" (click)="closeModal()">
+    <section class="modal-card" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div>
+          <div class="eyebrow">Distribution</div>
+          <h2 class="modal-title">Délivrer un médicament</h2>
+          <p class="modal-subtitle">
+            Attribuez des unités de médicaments à un patient. Une facture sera automatiquement générée par le Billing Service.
+          </p>
+        </div>
+        <button class="icon-button" type="button" (click)="closeModal()" aria-label="Fermer la popup">×</button>
+      </header>
+
+      <form class="modal-form" [formGroup]="dispenseForm" (ngSubmit)="submitDispense()">
+        <label class="field">
+          <span class="field-label">Sélectionner le médicament *</span>
+          <select class="input" formControlName="medicationId">
+            <option [ngValue]="null" disabled>Choisissez un médicament</option>
+            <option *ngFor="let med of medications()" [ngValue]="med.id" [disabled]="med.currentStock === 0">
+              {{ med.name }} (En stock : {{ med.currentStock }})
+            </option>
+          </select>
+          <span class="error-msg" *ngIf="dispenseForm.controls.medicationId.touched && dispenseForm.controls.medicationId.errors?.['required']">Ce champ est obligatoire.</span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Sélectionner le patient *</span>
+          <select class="input" formControlName="patientId">
+            <option [ngValue]="null" disabled>Choisissez un patient</option>
+            <option *ngFor="let pat of patients()" [ngValue]="pat.id">
+              {{ pat.label }}
+            </option>
+          </select>
+          <span class="error-msg" *ngIf="dispenseForm.controls.patientId.touched && dispenseForm.controls.patientId.errors?.['required']">Ce champ est obligatoire.</span>
+        </label>
+
+        <label class="field quantity-field">
+          <span class="field-label">Quantité *</span>
+          <input class="input" type="number" min="1" step="1" formControlName="quantity" />
+          <span class="error-msg" *ngIf="dispenseForm.controls.quantity.touched && dispenseForm.controls.quantity.errors?.['required']">Ce champ est obligatoire.</span>
+          <span class="error-msg" *ngIf="dispenseForm.controls.quantity.touched && dispenseForm.controls.quantity.errors?.['min']">La quantité doit être supérieure ou égale à 1.</span>
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" type="button" (click)="closeModal()">Annuler</button>
+          <button class="btn-primary" type="submit" [disabled]="loading()">
+            Distribuer & Facturer
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ── Toast Notification ── -->
+  <div class="toast" *ngIf="toast()" (click)="dismissToast()">
+    <span class="status status-success">Succès</span>
+    <span>{{ toast() }}</span>
+  </div>
+</div>
