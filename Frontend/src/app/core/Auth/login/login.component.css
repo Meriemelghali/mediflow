@@ -295,3 +295,10 @@ form {
   .auth-panel { display: none; }
   .auth-form-side { padding: 32px 20px; }
 }
+
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+  font-size: 13.5px;
+}

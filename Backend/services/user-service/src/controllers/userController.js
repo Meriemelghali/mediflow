@@ -84,16 +84,34 @@ exports.updatePassword = async (req, res) => {
 // POST forgot password
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) {
-      return res.status(400).json({ message: 'Email and new password are required' });
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
     }
 
-    const result = await userService.forgotPassword(email, newPassword);
+    const result = await userService.forgotPassword(email);
     res.json(result);
   } catch (err) {
-    if (err.message === 'User not found') {
-      return res.status(404).json({ message: err.message });
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must contain at least 6 characters' });
+    }
+
+    const result = await userService.resetPassword(token, newPassword);
+    res.json(result);
+  } catch (err) {
+    if (err.message === 'Invalid or expired reset token') {
+      return res.status(400).json({ message: err.message });
     }
     res.status(500).json({ message: err.message });
   }
