@@ -33,6 +33,25 @@ const userController = require('../controllers/userController');
  *         phone:
  *           type: string
  *           example: 55123456
+ *         patientInfo:
+ *           type: object
+ *           properties:
+ *             cnamNumber: { type: string }
+ *             bloodType: { type: string }
+ *             medicalHistory:
+ *               type: array
+ *               items: { type: string }
+ *         doctorInfo:
+ *           type: object
+ *           properties:
+ *             specialty: { type: string }
+ *             licenseNumber: { type: string }
+ *             consultationFee: { type: number }
+ *         pharmacistInfo:
+ *           type: object
+ *           properties:
+ *             pharmacyName: { type: string }
+ *             licenseNumber: { type: string }
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -42,7 +61,7 @@ const userController = require('../controllers/userController');
  *
  *     UserInput:
  *       type: object
- *       required: [firstName, lastName, email]
+ *       required: [firstName, lastName, email, password]
  *       properties:
  *         firstName:
  *           type: string
@@ -53,6 +72,9 @@ const userController = require('../controllers/userController');
  *         email:
  *           type: string
  *           example: john@test.com
+ *         password:
+ *           type: string
+ *           example: "strongPassword123"
  *         role:
  *           type: string
  *           enum: [PATIENT, DOCTOR, NURSE, ADMIN, PHARMACIST]
@@ -60,6 +82,25 @@ const userController = require('../controllers/userController');
  *         phone:
  *           type: string
  *           example: 55123456
+ *         patientInfo:
+ *           type: object
+ *           properties:
+ *             cnamNumber: { type: string }
+ *             bloodType: { type: string }
+ *             medicalHistory:
+ *               type: array
+ *               items: { type: string }
+ *         doctorInfo:
+ *           type: object
+ *           properties:
+ *             specialty: { type: string }
+ *             licenseNumber: { type: string }
+ *             consultationFee: { type: number }
+ *         pharmacistInfo:
+ *           type: object
+ *           properties:
+ *             pharmacyName: { type: string }
+ *             licenseNumber: { type: string }
  */
 
 /**
@@ -130,5 +171,157 @@ router.get('/:id', userController.getByPatientCode);
  *         description: Données invalides
  */
 router.post('/', userController.create);
+
+/**
+ * @openapi
+ * /api/user/login:
+ *   post:
+ *     summary: Authentifie un utilisateur et retourne un JWT
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Authentification réussie
+ *       401:
+ *         description: Identifiants invalides
+ */
+router.post('/login', userController.login);
+
+/**
+ * @openapi
+ * /api/user/{id}/password:
+ *   put:
+ *     summary: Met à jour le mot de passe d'un utilisateur
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'ID MongoDB de l'utilisateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 example: "oldPassword123"
+ *               newPassword:
+ *                 type: string
+ *                 example: "newPassword123"
+ *     responses:
+ *       200:
+ *         description: Mot de passe mis à jour
+ *       400:
+ *         description: Ancien mot de passe invalide
+ */
+router.put('/:id/password', userController.updatePassword);
+
+/**
+ * @openapi
+ * /api/user/forgot-password:
+ *   post:
+ *     summary: Réinitialise le mot de passe via email
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "john@test.com"
+ *               newPassword:
+ *                 type: string
+ *                 example: "resetPassword123"
+ *     responses:
+ *       200:
+ *         description: Mot de passe réinitialisé
+ *       404:
+ *         description: Utilisateur non trouvé
+ */
+router.post('/forgot-password', userController.forgotPassword);
+
+/**
+ * @openapi
+ * /api/user/{id}/role:
+ *   put:
+ *     summary: Modifie le rôle d'un utilisateur
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'ID MongoDB de l'utilisateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [PATIENT, DOCTOR, NURSE, ADMIN, PHARMACIST]
+ *                 example: "DOCTOR"
+ *     responses:
+ *       200:
+ *         description: Rôle mis à jour
+ *       400:
+ *         description: Rôle invalide
+ */
+router.put('/:id/role', userController.updateRole);
+
+/**
+ * @openapi
+ * /api/user/{id}/status:
+ *   put:
+ *     summary: Active ou désactive un compte utilisateur (Staff, Docteur, Pharmacien...)
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: L'ID MongoDB de l'utilisateur
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 example: false
+ *                 description: true pour activer, false pour désactiver
+ *     responses:
+ *       200:
+ *         description: Statut du compte mis à jour
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: Utilisateur non trouvé
+ */
+router.put('/:id/status', userController.toggleStatus);
 
 module.exports = router;

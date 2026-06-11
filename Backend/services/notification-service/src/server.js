@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 8086;
 app.use(cors());
 app.use(express.json());
 
+const notificationRoutes = require('./routes/notificationRoutes');
+app.use('/api/notifications', notificationRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Notification Service is running 🚀' });
 });

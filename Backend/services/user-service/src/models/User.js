@@ -8,12 +8,34 @@ const userSchema = new mongoose.Schema(
     firstName: { type: String, required: true },
     lastName:  { type: String, required: true },
     email:     { type: String, required: true, unique: true, lowercase: true },
-    role: {
+    password:  { type: String, required: true },
+    roles: [{
+      type: String,
+      enum: ['PATIENT', 'DOCTOR', 'NURSE', 'ADMIN', 'PHARMACIST']
+    }],
+    activeRole: {
       type: String,
       enum: ['PATIENT', 'DOCTOR', 'NURSE', 'ADMIN', 'PHARMACIST'],
-      default: 'PATIENT',
+      default: 'PATIENT'
     },
+    isActive: { type: Boolean, default: true },
     phone: String,
+
+    // --- Champs spécifiques par rôle ---
+    patientInfo: {
+      cnamNumber: String,
+      bloodType: String,
+      medicalHistory: [String]
+    },
+    doctorInfo: {
+      specialty: String,
+      licenseNumber: String,
+      consultationFee: Number
+    },
+    pharmacistInfo: {
+      pharmacyName: String,
+      licenseNumber: String
+    }
   },
   { timestamps: true }
 );

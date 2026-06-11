@@ -40,6 +40,7 @@ export class AppointmentsComponent implements OnInit {
           return new Date(b.appointmentDate).getTime() -
             new Date(a.appointmentDate).getTime();
         });
+        this.updateStats();
         this.applyFilters();
         this.loading = false;
       },
@@ -78,8 +79,16 @@ export class AppointmentsComponent implements OnInit {
     this.applyFilters();
   }
 
-  get stats() {
-    return {
+  stats = {
+    total: 0,
+    scheduled: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+
+  updateStats() {
+    this.stats = {
       total: this.appointments.length,
       scheduled: this.appointments.filter((a) => a.status === 'SCHEDULED').length,
       confirmed: this.appointments.filter((a) => a.status === 'CONFIRMED').length,
