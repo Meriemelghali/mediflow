@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
     },
     isActive: { type: Boolean, default: true },
     phone: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 
     // --- Champs spécifiques par rôle ---
     patientInfo: {

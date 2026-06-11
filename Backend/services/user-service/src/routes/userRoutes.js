@@ -257,6 +257,7 @@ router.put('/:id/password', userController.updatePassword);
  *         description: Utilisateur non trouvé
  */
 router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password', userController.resetPassword);
 
 /**
  * @openapi
