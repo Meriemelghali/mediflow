@@ -21,6 +21,10 @@ spring:
               uri: lb://billing-service
               predicates:
                 - Path=/api/factures/**
+            - id: billing-service-paiements
+              uri: lb://billing-service
+              predicates:
+                - Path=/api/paiements/**
             - id: appointment-service
               uri: lb://appointment-service
               predicates:
