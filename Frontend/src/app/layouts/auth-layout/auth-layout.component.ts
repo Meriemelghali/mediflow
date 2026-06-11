@@ -1,15 +1,15 @@
 import { Component, OnDestroy, afterNextRender } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-auth-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  templateUrl: './auth-layout.component.html',
+  styleUrl: './auth-layout.component.css'
 })
-export class AppComponent implements OnDestroy {
+export class AuthLayoutComponent implements OnDestroy {
   currentTime = new Date();
   private clockSub?: Subscription;
 

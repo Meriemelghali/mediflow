@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ExamService } from '../../services/exam.service';
-import { Examen, ExamStatus, PageExamen, Patient, Resultat } from '../../models/exam.model';
+import { ExamService } from './exam.service';
+import { Examen, ExamStatus, PageExamen, Patient, Resultat } from './exam.model';
 
 @Component({
   selector: 'app-exams',
@@ -57,13 +57,13 @@ export class ExamsComponent implements OnInit {
     this.loading = true;
     this.examService.getExams(page, this.pageSize, this.keyword, this.statusFilter || undefined)
       .subscribe({
-        next: (data) => {
-          this.exams = data.content;
+        next: (data: any) => {
+          this.exams = data.content.sort((a: any, b: any) => new Date(b.dateExamen).getTime() - new Date(a.dateExamen).getTime());
           this.totalPages = data.totalPages;
           this.currentPage = data.number;
           this.loading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error(err);
           this.loading = false;
         }
