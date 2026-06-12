@@ -14,6 +14,7 @@ import tn.mediflow.pharmacyservice.repository.DispensingRepository;
 import tn.mediflow.pharmacyservice.repository.MedicationRepository;
 import tn.mediflow.pharmacyservice.client.UserClient;
 import tn.mediflow.pharmacyservice.dto.UserDTO;
+import tn.mediflow.pharmacyservice.messaging.RabbitMQProducer;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ public class DispensingService {
     private final DispensingRepository dispensingRepository;
     private final BillingClient billingClient;
     private final UserClient userClient;
+    private final RabbitMQProducer rabbitMQProducer;
 
     @Transactional
     public Dispensing dispense(DispensingRequest request) {
@@ -88,7 +90,30 @@ public class DispensingService {
             throw new RuntimeException("Billing service error: " + e.getMessage());
         }
 
-        return dispensingRepository.save(dispensing);
+        Dispensing savedDispensing = dispensingRepository.save(dispensing);
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🐇 Scénario 2 : Publier l'événement "medication.dispensed"
+        // ══════════════════════════════════════════════════════════════════
+        rabbitMQProducer.sendMedicationDispensedEvent(
+                request.getPatientId(),
+                medication.getName(),
+                request.getQuantity(),
+                totalAmount.doubleValue()
+        );
+
+        // ══════════════════════════════════════════════════════════════════
+        // 🐇 Scénario 1 : Alerte si le stock descend sous le seuil critique
+        // ══════════════════════════════════════════════════════════════════
+        if (medication.getCurrentStock() < 10) {
+            rabbitMQProducer.sendStockLowAlert(
+                    medication.getId(),
+                    medication.getName(),
+                    medication.getCurrentStock()
+            );
+        }
+
+        return savedDispensing;
     }
 
     public List<Dispensing> getAll() {

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const User = require('../models/User');
+const rabbitMQService = require('../utils/rabbitmq');
 
 class UserService {
   async getAllUsers() {
@@ -42,6 +43,23 @@ class UserService {
     delete userObj.resetPasswordToken;
     delete userObj.resetPasswordExpires;
 
+    // ══════════════════════════════════════════════════════════════════
+    // 🐇 Scénario 3 (Consumer) : Si le nouvel utilisateur est un PATIENT,
+    //    publier l'événement "patient.created" dans RabbitMQ.
+    //    Le pharmacy-service écoutera cet événement et créera un dossier
+    //    pharmaceutique automatiquement.
+    // ══════════════════════════════════════════════════════════════════
+    if (role === 'PATIENT') {
+      await rabbitMQService.publish('patient.created', {
+        patientCode: userObj.patientCode,
+        firstName: userObj.firstName,
+        lastName: userObj.lastName,
+        email: userObj.email,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    // Notification de bienvenue (HTTP sync existant)
     try {
       const response = await fetch('http://localhost:8086/api/notifications/email/welcome', {
         method: 'POST',

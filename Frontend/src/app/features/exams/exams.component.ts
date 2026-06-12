@@ -110,14 +110,15 @@ export class ExamsComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.examService.getExams(page, this.pageSize, this.keyword || undefined, this.statusFilter || undefined)
       .subscribe({
-        next: (data: any) => {
-          this.exams = data.content.sort((a: any, b: any) => new Date(b.dateExamen).getTime() - new Date(a.dateExamen).getTime());
+        next: (data: PageExamen) => {
+          this.exams = data.content.sort((a, b) => new Date(b.dateExamen || '').getTime() - new Date(a.dateExamen || '').getTime());
           this.totalPages = data.totalPages;
           this.currentPage = data.number;
           this.loading = false;
         },
         error: (err: any) => {
           console.error(err);
+          this.showToast(err?.message || 'Erreur de chargement des examens.', 'error');
           this.loading = false;
         }
       });
@@ -159,7 +160,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loadExams(0);
         this.showToast('Examen créé avec succès.', 'success');
       },
-      error: (err: any) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la création.', 'error')
     });
   }
 
@@ -187,7 +188,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loadExams(this.currentPage);
         this.showToast('Examen mis à jour.', 'success');
       },
-      error: (err: any) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour.', 'error')
     });
   }
 
@@ -200,7 +201,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
           this.loadExams(this.currentPage);
           this.showToast('Examen supprimé.', 'success');
         },
-        error: (err: any) => this.showToast(err.message, 'error')
+        error: (err: any) => this.showToast(err?.message || 'Erreur lors de la suppression.', 'error')
       });
     }
   }
@@ -228,7 +229,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.showStatusModal = false;
-        this.showToast(err.message, 'error');
+        this.showToast(err?.message || 'Erreur lors du changement de statut.', 'error');
       }
     });
   }
@@ -256,7 +257,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loadExams(this.currentPage);
         this.showToast('Résultat ajouté.', 'success');
       },
-      error: (err: any) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de l\'ajout du résultat.', 'error')
     });
   }
 
@@ -276,7 +277,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.editingResult = null;
         this.showToast('Résultat mis à jour.', 'success');
       },
-      error: (err: any) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour du résultat.', 'error')
     });
   }
 
@@ -309,7 +310,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: (err: any) => {
-        this.showToast(err.message || 'Impossible de charger les détails.', 'error');
+        this.showToast(err?.message || 'Impossible de charger les détails.', 'error');
         this.loading = false;
       }
     });
