@@ -40,10 +40,17 @@ public class BedController {
         return bedService.getBedsByRoom(roomId);
     }
 
-    // PUT /api/rooms/beds/{id}/assign  — réserver sans patient connu
-    @PutMapping("/beds/{id}/assign")
-    public Bed assignBed(@PathVariable Long id) {
-        return bedService.assignBed(id);
+
+    @PutMapping("/beds/{id}")
+    public Bed updateBed(@PathVariable Long id, @RequestBody Bed bed) {
+        return bedService.updateBed(id, bed);
+    }
+
+    @PutMapping("/beds/{id}/status")
+    public Bed updateBedStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Bed.BedStatus status = Bed.BedStatus.valueOf(body.get("status").toString());
+        String notes = body.get("notes") != null ? body.get("notes").toString() : null;
+        return bedService.updateStatus(id, status, notes);
     }
 
   
@@ -60,5 +67,10 @@ public class BedController {
     @PutMapping("/beds/{id}/release")
     public Bed releaseBed(@PathVariable Long id) {
         return bedService.releaseBed(id);
+    }
+
+    @DeleteMapping("/beds/{id}")
+    public void deleteBed(@PathVariable Long id) {
+        bedService.deleteBed(id);
     }
 }

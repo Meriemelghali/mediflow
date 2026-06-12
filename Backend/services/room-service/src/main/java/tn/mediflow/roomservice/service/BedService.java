@@ -39,6 +39,13 @@ public class BedService {
             throw new IllegalArgumentException("Un lit avec ce numero existe deja dans cette chambre.");
         }
 
+        long activeBeds = bedRepository.countByRoomIdAndActiveTrue(roomId);
+        if (activeBeds >= room.getCapacity()) {
+            throw new IllegalStateException(
+                    "Impossible d'ajouter un lit : la chambre a deja atteint sa capacite maximale de "
+                            + room.getCapacity() + " lit(s).");
+        }
+
         bed.setRoom(room);
         bed.setStatus(Bed.BedStatus.AVAILABLE);
         bed.setActive(true);
@@ -60,12 +67,14 @@ public class BedService {
 
     @Transactional(readOnly = true)
     public List<Bed> getAllBeds() {
-        return bedRepository.findAll();
+        return bedRepository.findAll().stream()
+                .filter(bed -> Boolean.TRUE.equals(bed.getActive()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<Bed> getBedsByRoom(Long roomId) {
-        return bedRepository.findByRoomId(roomId);
+        return bedRepository.findByRoomIdAndActiveTrue(roomId);
     }
 
     @Transactional(readOnly = true)
@@ -83,24 +92,6 @@ public class BedService {
         return bedRepository.findByPatientId(patientId);
     }
 
-    // ============================
-    // ASSIGN BED (simple — sans patient connu)
-    // ============================
-
-    public Bed assignBed(Long bedId) {
-        Bed bed = bedRepository.findById(bedId)
-                .orElseThrow(() -> new EntityNotFoundException("Lit introuvable - ID: " + bedId));
-
-        if (!bed.isAvailable()) {
-            throw new IllegalStateException(
-                    "Le lit '" + bed.getBedNumber() + "' n'est pas disponible. Statut: " + bed.getStatus());
-        }
-
-        bed.setStatus(Bed.BedStatus.RESERVED);
-        Bed saved = bedRepository.save(bed);
-        log.info("Lit '{}' reserve", saved.getBedNumber());
-        return saved;
-    }
 
     // ============================
     // ASSIGN PATIENT → lit (avec Feign pharmacy-service)
@@ -171,6 +162,10 @@ public class BedService {
         Bed bed = bedRepository.findById(bedId)
                 .orElseThrow(() -> new EntityNotFoundException("Lit introuvable - ID: " + bedId));
 
+        if (bed.getStatus() != Bed.BedStatus.OCCUPIED) {
+            throw new IllegalStateException("Seul un lit occupe peut etre libere.");
+        }
+
         log.info("Liberation du lit '{}' (patient: '{}')", bed.getBedNumber(), bed.getPatientName());
         bed.release();
         return bedRepository.save(bed);
@@ -186,6 +181,10 @@ public class BedService {
 
         Bed.BedStatus old = bed.getStatus();
 
+        if (newStatus == Bed.BedStatus.OCCUPIED) {
+            throw new IllegalArgumentException("Utilisez l'admission patient pour passer un lit en OCCUPIED.");
+        }
+
         if (newStatus == Bed.BedStatus.AVAILABLE) {
             bed.setPatientId(null);
             bed.setPatientName(null);
@@ -197,6 +196,34 @@ public class BedService {
 
         Bed saved = bedRepository.save(bed);
         log.info("Statut du lit '{}' : {} -> {}", saved.getBedNumber(), old, newStatus);
+        return saved;
+    }
+
+    public Bed updateBed(Long id, Bed updated) {
+        Bed existing = bedRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Lit introuvable - ID: " + id));
+
+        if (existing.getStatus() == Bed.BedStatus.OCCUPIED) {
+            throw new IllegalStateException("Impossible de modifier un lit occupe. Liberez-le d'abord.");
+        }
+
+        if (updated.getBedNumber() != null && !updated.getBedNumber().isBlank()
+                && !existing.getBedNumber().equals(updated.getBedNumber())
+                && bedRepository.existsByBedNumberAndRoomId(updated.getBedNumber(), existing.getRoom().getId())) {
+            throw new IllegalArgumentException("Un lit avec ce numero existe deja dans cette chambre.");
+        }
+
+        if (updated.getBedNumber() != null && !updated.getBedNumber().isBlank()) {
+            existing.setBedNumber(updated.getBedNumber());
+        }
+        existing.setNotes(updated.getNotes());
+
+        if (updated.getStatus() != null && updated.getStatus() != existing.getStatus()) {
+            return updateStatus(id, updated.getStatus(), updated.getNotes());
+        }
+
+        Bed saved = bedRepository.save(existing);
+        log.info("Lit '{}' mis a jour", saved.getBedNumber());
         return saved;
     }
 
