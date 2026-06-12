@@ -1,4 +1,139 @@
 services:
+
+  # ─────────────────────────────────────────────
+  #  INFRASTRUCTURE
+  # ─────────────────────────────────────────────
+
+  discovery-service:
+    build:
+      context: ./Backend/infrastructure/discovery-service
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  config-server:
+    build:
+      context: ./Backend/infrastructure/config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8888/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ./Backend/infrastructure/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8090:8090"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+
+  # ─────────────────────────────────────────────
+  #  MESSAGE BROKER
+  # ─────────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: mediflow
+      RABBITMQ_DEFAULT_PASS: mediflow123
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # ─────────────────────────────────────────────
+  #  SECURITY - KEYCLOAK
+  # ─────────────────────────────────────────────
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-mem
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep '200 OK'"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+  # ─────────────────────────────────────────────
+  #  MICROSERVICES
+  # ─────────────────────────────────────────────
+
+  exam-service:
+    build:
+      context: ./Backend/services/exam-service
+    container_name: exam-service
+    ports:
+      - "8085:8085"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mediflow
+      - SPRING_RABBITMQ_PASSWORD=mediflow123
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8085/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+# ─────────────────────────────────────────────
+#  NETWORK & VOLUMES
+# ─────────────────────────────────────────────
   # ==========================================
   # Message Broker (RabbitMQ)
   # ==========================================

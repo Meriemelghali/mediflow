@@ -1,15 +1,19 @@
 package tn.mediflow.examservice.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import tn.mediflow.examservice.config.RabbitMQConfig;
 import tn.mediflow.examservice.clients.BillingClient;
 import tn.mediflow.examservice.clients.PatientClient;
 import tn.mediflow.examservice.dto.BillDTO;
+import tn.mediflow.examservice.dto.ExamRequestDTO;
 import tn.mediflow.examservice.dto.ExamResponseDTO;
 import tn.mediflow.examservice.dto.Patient;
+import tn.mediflow.examservice.dto.ResultatRequestDTO;
 import tn.mediflow.examservice.entities.ExamStatus;
 import tn.mediflow.examservice.entities.Examen;
 import tn.mediflow.examservice.entities.Resultat;
@@ -25,20 +29,28 @@ public class ExamService {
     private final ExamenRepository examenRepository;
     private final ResultatRepository resultatRepository;
     private final PatientClient patientClient;
-    private final BillingClient billingClient;
+    private final BillingClient billingClient; // Keep for getExamWithPatient if needed
+    private final RabbitTemplate rabbitTemplate;
 
-    public Examen createExamen(Examen examen) {
+    public Examen createExamen(ExamRequestDTO requestDTO) {
         // Démonstration OpenFeign : Vérification via le service patient
         try {
-            patientClient.getPatientById(examen.getPatientId());
+            patientClient.getPatientById(requestDTO.getPatientId());
         } catch (Exception e) {
             System.err.println("Note: Communication Feign avec user-service échouée ou patient introuvable.");
         }
         
+        Examen examen = new Examen();
+        examen.setNomExamen(requestDTO.getNomExamen());
+        examen.setPatientId(requestDTO.getPatientId());
         examen.setDateExamen(LocalDateTime.now());
-        if (examen.getStatus() == null) {
+        
+        if (requestDTO.getStatus() != null) {
+            examen.setStatus(requestDTO.getStatus());
+        } else {
             examen.setStatus(ExamStatus.PLANIFIE);
         }
+        
         Examen saved = examenRepository.save(examen);
         triggerBilling(saved);
         return saved;
@@ -74,12 +86,16 @@ public class ExamService {
                 .build();
     }
 
-    public Examen updateExamen(Long id, Examen updatedExamen) {
+    public Examen updateExamen(Long id, ExamRequestDTO requestDTO) {
         Examen existing = getExamById(id);
-        existing.setNomExamen(updatedExamen.getNomExamen());
-        existing.setPatientId(updatedExamen.getPatientId());
-        if (updatedExamen.getStatus() != null) {
-            existing.setStatus(updatedExamen.getStatus());
+        if (requestDTO.getNomExamen() != null) {
+            existing.setNomExamen(requestDTO.getNomExamen());
+        }
+        if (requestDTO.getPatientId() != null) {
+            existing.setPatientId(requestDTO.getPatientId());
+        }
+        if (requestDTO.getStatus() != null) {
+            existing.setStatus(requestDTO.getStatus());
         }
         Examen saved = examenRepository.save(existing);
         triggerBilling(saved);
@@ -104,38 +120,31 @@ public class ExamService {
             try {
                 String reference = "EXAM-" + examen.getId();
                 
-                // Éviter les doublons : vérifier si une facture existe déjà
-                boolean alreadyBilled = false;
-                try {
-                    List<BillDTO> allBills = billingClient.getAllBills();
-                    if (allBills != null) {
-                        alreadyBilled = allBills.stream()
-                                .anyMatch(b -> reference.equals(b.getReference()));
-                    }
-                } catch (Exception e) {
-                    System.err.println("Erreur vérification doublons billing: " + e.getMessage());
-                }
-
-                if (!alreadyBilled) {
-                    BillDTO bill = BillDTO.builder()
-                            .reference(reference)
-                            .montantTotal(50.0)
-                            .statut("NON_PAYE")
-                            .build();
-                    billingClient.createBill(bill);
-                }
+                BillDTO bill = BillDTO.builder()
+                        .reference(reference)
+                        .montantTotal(50.0)
+                        .statut("NON_PAYE")
+                        .build();
+                
+                rabbitTemplate.convertAndSend(RabbitMQConfig.BILLING_EXCHANGE, RabbitMQConfig.BILLING_ROUTING_KEY, bill);
+                System.out.println("Message de facturation envoyé à RabbitMQ pour: " + reference);
             } catch (Exception e) {
-                System.err.println("Échec de la facturation via Feign: " + e.getMessage());
+                System.err.println("Échec de l'envoi de facturation via RabbitMQ: " + e.getMessage());
             }
         }
     }
 
-    public Resultat addResultat(Long examenId, Resultat resultat) {
+    public Resultat addResultat(Long examenId, ResultatRequestDTO requestDTO) {
         Examen examen = getExamById(examenId);
         if (examen.getStatus() == ExamStatus.ANNULE) {
             throw new RuntimeException("Impossible d'ajouter un résultat à un examen annulé");
         }
+        
+        Resultat resultat = new Resultat();
+        resultat.setValeur(requestDTO.getValeur());
+        resultat.setUnite(requestDTO.getUnite());
         resultat.setExamen(examen);
+        
         Resultat saved = resultatRepository.save(resultat);
         if (examen.getStatus() == ExamStatus.PLANIFIE) {
             examen.setStatus(ExamStatus.EN_COURS);
@@ -144,11 +153,15 @@ public class ExamService {
         return saved;
     }
 
-    public Resultat updateResultat(Long id, Resultat updatedResultat) {
+    public Resultat updateResultat(Long id, ResultatRequestDTO requestDTO) {
         Resultat existing = resultatRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Résultat non trouvé"));
-        existing.setValeur(updatedResultat.getValeur());
-        existing.setUnite(updatedResultat.getUnite());
+        if (requestDTO.getValeur() != null) {
+            existing.setValeur(requestDTO.getValeur());
+        }
+        if (requestDTO.getUnite() != null) {
+            existing.setUnite(requestDTO.getUnite());
+        }
         return resultatRepository.save(existing);
     }
 

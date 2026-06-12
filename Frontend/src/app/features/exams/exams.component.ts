@@ -1,8 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExamService } from './exam.service';
-import { Examen, ExamStatus, PageExamen, Patient, Resultat } from './exam.model';
+import {
+  Examen,
+  ExamRequestDTO,
+  ExamResponseDTO,
+  ExamStatus,
+  PageExamen,
+  Patient,
+  Resultat,
+  ResultatRequestDTO
+} from './exam.model';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+}
 
 @Component({
   selector: 'app-exams',
@@ -11,7 +26,7 @@ import { Examen, ExamStatus, PageExamen, Patient, Resultat } from './exam.model'
   templateUrl: './exams.component.html',
   styleUrls: ['./exams.component.css']
 })
-export class ExamsComponent implements OnInit {
+export class ExamsComponent implements OnInit, OnDestroy {
   exams: Examen[] = [];
   patients: Patient[] = [];
   totalPages: number = 0;
@@ -20,22 +35,50 @@ export class ExamsComponent implements OnInit {
   keyword: string = '';
   statusFilter: ExamStatus | '' = '';
   loading: boolean = false;
-  
+
+  // Modals
   showAddModal: boolean = false;
   showEditModal: boolean = false;
   showDetailsModal: boolean = false;
   showResultsModal: boolean = false;
-  
-  newExam: Partial<Examen> = {
-    nomExamen: '',
-    patientId: 0,
-    status: ExamStatus.PLANIFIE
+  showStatusModal: boolean = false;
+
+  // Formulaires
+  newExam: ExamRequestDTO = { nomExamen: '', patientId: 0, status: ExamStatus.PLANIFIE };
+  selectedExam: Examen | null = null;
+  editExamDTO: ExamRequestDTO = { nomExamen: '', patientId: 0 };
+
+  // Résultats
+  newResult: ResultatRequestDTO = { valeur: '', unite: '' };
+  editingResult: Resultat | null = null;
+  editResultDTO: ResultatRequestDTO = { valeur: '', unite: '' };
+
+  // Vue détails Feign
+  selectedFullDetails: ExamResponseDTO | null = null;
+
+  // Changement de statut
+  pendingStatusChange: { exam: Examen; newStatus: ExamStatus } | null = null;
+
+  // Toasts
+  toasts: Toast[] = [];
+  private toastCounter = 0;
+  private toastTimers: any[] = [];
+
+  // Pour les templates
+  readonly ExamStatus = ExamStatus;
+  readonly statusLabels: Record<ExamStatus, string> = {
+    PLANIFIE: 'Planifié',
+    EN_COURS: 'En cours',
+    TERMINE: 'Terminé',
+    ANNULE: 'Annulé'
   };
 
-  selectedExam: Examen | null = null;
-  newResult: Resultat = { valeur: '', unite: '' };
-  
-  selectedFullDetails: any = null;
+  readonly statusOptions: ExamStatus[] = [
+    ExamStatus.PLANIFIE,
+    ExamStatus.EN_COURS,
+    ExamStatus.TERMINE,
+    ExamStatus.ANNULE
+  ];
 
   constructor(private examService: ExamService) {}
 
@@ -44,8 +87,30 @@ export class ExamsComponent implements OnInit {
     this.loadExams();
   }
 
+  ngOnDestroy(): void {
+    this.toastTimers.forEach(t => clearTimeout(t));
+  }
+
+  // ─── Toast system ───────────────────────────────────────────────────────────
+
+  showToast(message: string, type: Toast['type'] = 'success'): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, message, type });
+    const timer = setTimeout(() => this.dismissToast(id), 4000);
+    this.toastTimers.push(timer);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+  }
+
+  // ─── Data loading ────────────────────────────────────────────────────────────
+
   loadPatients(): void {
-    this.examService.getPatients().subscribe(data => this.patients = data);
+    this.examService.getPatients().subscribe({
+      next: (data: Patient[]) => this.patients = data,
+      error: (err: any) => this.showToast('Impossible de charger les patients.', 'warning')
+    });
   }
 
   getPatientName(id: number): string {
@@ -55,16 +120,17 @@ export class ExamsComponent implements OnInit {
 
   loadExams(page: number = 0): void {
     this.loading = true;
-    this.examService.getExams(page, this.pageSize, this.keyword, this.statusFilter || undefined)
+    this.examService.getExams(page, this.pageSize, this.keyword || undefined, this.statusFilter || undefined)
       .subscribe({
-        next: (data: any) => {
-          this.exams = data.content.sort((a: any, b: any) => new Date(b.dateExamen).getTime() - new Date(a.dateExamen).getTime());
+        next: (data: PageExamen) => {
+          this.exams = data.content.sort((a, b) => new Date(b.dateExamen || '').getTime() - new Date(a.dateExamen || '').getTime());
           this.totalPages = data.totalPages;
           this.currentPage = data.number;
           this.loading = false;
         },
         error: (err: any) => {
           console.error(err);
+          this.showToast(err?.message || 'Erreur de chargement des examens.', 'error');
           this.loading = false;
         }
       });
@@ -80,7 +146,10 @@ export class ExamsComponent implements OnInit {
     }
   }
 
+  // ─── Création ────────────────────────────────────────────────────────────────
+
   openAddModal(): void {
+    this.newExam = { nomExamen: '', patientId: 0, status: ExamStatus.PLANIFIE };
     this.showAddModal = true;
   }
 
@@ -89,65 +158,174 @@ export class ExamsComponent implements OnInit {
   }
 
   createExam(): void {
-    this.examService.createExam(this.newExam).subscribe(() => {
-      this.closeAddModal();
-      this.loadExams(0);
-      this.newExam = { nomExamen: '', patientId: 0, status: ExamStatus.PLANIFIE };
+    if (!this.newExam.nomExamen?.trim()) {
+      this.showToast('Le nom de l\'examen est requis.', 'warning');
+      return;
+    }
+    if (!this.newExam.patientId) {
+      this.showToast('Veuillez sélectionner un patient.', 'warning');
+      return;
+    }
+    this.examService.createExam(this.newExam).subscribe({
+      next: () => {
+        this.closeAddModal();
+        this.loadExams(0);
+        this.showToast('Examen créé avec succès.', 'success');
+      },
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la création.', 'error')
     });
   }
 
-  deleteExam(id: number): void {
-    if (confirm('Voulez-vous vraiment supprimer cet examen ?')) {
-      this.examService.deleteExam(id).subscribe(() => this.loadExams(this.currentPage));
-    }
-  }
+  // ─── Modification ────────────────────────────────────────────────────────────
 
   openEditModal(exam: Examen): void {
     this.selectedExam = { ...exam };
+    this.editExamDTO = {
+      nomExamen: exam.nomExamen,
+      patientId: exam.patientId,
+      status: exam.status
+    };
     this.showEditModal = true;
   }
 
   updateExam(): void {
-    if (this.selectedExam && this.selectedExam.id) {
-      this.examService.updateExam(this.selectedExam.id, this.selectedExam).subscribe(() => {
+    if (!this.selectedExam?.id) return;
+    if (!this.editExamDTO.nomExamen?.trim()) {
+      this.showToast('Le nom de l\'examen est requis.', 'warning');
+      return;
+    }
+    this.examService.updateExam(this.selectedExam.id, this.editExamDTO).subscribe({
+      next: () => {
         this.showEditModal = false;
         this.loadExams(this.currentPage);
+        this.showToast('Examen mis à jour.', 'success');
+      },
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour.', 'error')
+    });
+  }
+
+  // ─── Suppression ─────────────────────────────────────────────────────────────
+
+  deleteExam(id: number): void {
+    if (confirm('Voulez-vous vraiment supprimer cet examen ?')) {
+      this.examService.deleteExam(id).subscribe({
+        next: () => {
+          this.loadExams(this.currentPage);
+          this.showToast('Examen supprimé.', 'success');
+        },
+        error: (err: any) => this.showToast(err?.message || 'Erreur lors de la suppression.', 'error')
       });
     }
   }
 
+  // ─── Changement de statut ────────────────────────────────────────────────────
+
+  openStatusModal(exam: Examen): void {
+    this.pendingStatusChange = { exam, newStatus: exam.status };
+    this.showStatusModal = true;
+  }
+
+  confirmStatusChange(): void {
+    if (!this.pendingStatusChange) return;
+    const { exam, newStatus } = this.pendingStatusChange;
+
+    this.examService.updateStatus(exam.id!, newStatus).subscribe({
+      next: () => {
+        this.showStatusModal = false;
+        this.pendingStatusChange = null;
+        this.loadExams(this.currentPage);
+        const msg = newStatus === ExamStatus.TERMINE
+          ? 'Statut mis à TERMINÉ — une facture a été envoyée via RabbitMQ.'
+          : `Statut mis à ${this.statusLabels[newStatus]}.`;
+        this.showToast(msg, newStatus === ExamStatus.TERMINE ? 'info' : 'success');
+      },
+      error: (err: any) => {
+        this.showStatusModal = false;
+        this.showToast(err?.message || 'Erreur lors du changement de statut.', 'error');
+      }
+    });
+  }
+
+  // ─── Résultats ───────────────────────────────────────────────────────────────
+
   openResultsModal(exam: Examen): void {
-    this.selectedExam = exam;
+    this.selectedExam = { ...exam };
+    this.newResult = { valeur: '', unite: '' };
+    this.editingResult = null;
     this.showResultsModal = true;
   }
 
   addResult(): void {
-    if (this.selectedExam && this.selectedExam.id) {
-      this.examService.addResult(this.selectedExam.id, this.newResult).subscribe(res => {
-        this.selectedExam?.resultats?.push(res);
-        this.newResult = { valeur: '', unite: '' };
-        this.loadExams(this.currentPage); // Pour rafraichir le statut si passé en EN_COURS
-      });
+    if (!this.selectedExam?.id) return;
+    if (!this.newResult.valeur.trim()) {
+      this.showToast('La valeur est requise.', 'warning');
+      return;
     }
+    this.examService.addResult(this.selectedExam.id, this.newResult).subscribe({
+      next: (res: Resultat) => {
+        if (!this.selectedExam!.resultats) this.selectedExam!.resultats = [];
+        this.selectedExam!.resultats.push(res);
+        this.newResult = { valeur: '', unite: '' };
+        this.loadExams(this.currentPage);
+        this.showToast('Résultat ajouté.', 'success');
+      },
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de l\'ajout du résultat.', 'error')
+    });
+  }
+
+  startEditResult(r: Resultat): void {
+    this.editingResult = r;
+    this.editResultDTO = { valeur: r.valeur, unite: r.unite };
+  }
+
+  saveEditResult(): void {
+    if (!this.editingResult?.id) return;
+    this.examService.updateResult(this.editingResult.id, this.editResultDTO).subscribe({
+      next: (updated: Resultat) => {
+        if (this.selectedExam?.resultats) {
+          const idx = this.selectedExam.resultats.findIndex((r: Resultat) => r.id === updated.id);
+          if (idx !== -1) this.selectedExam.resultats[idx] = updated;
+        }
+        this.editingResult = null;
+        this.showToast('Résultat mis à jour.', 'success');
+      },
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour du résultat.', 'error')
+    });
+  }
+
+  cancelEditResult(): void {
+    this.editingResult = null;
   }
 
   deleteResult(id: number): void {
     if (confirm('Supprimer ce résultat ?')) {
-      this.examService.deleteResult(id).subscribe(() => {
-        if (this.selectedExam) {
-          this.selectedExam.resultats = this.selectedExam.resultats?.filter(r => r.id !== id);
-        }
+      this.examService.deleteResult(id).subscribe({
+        next: () => {
+          if (this.selectedExam) {
+            this.selectedExam.resultats = this.selectedExam.resultats?.filter(r => r.id !== id);
+          }
+          this.showToast('Résultat supprimé.', 'success');
+        },
+        error: (err) => this.showToast(err.message, 'error')
       });
     }
   }
 
+  // ─── Détails Feign ───────────────────────────────────────────────────────────
+
   viewFullDetails(id: number): void {
     this.loading = true;
-    this.examService.getFullDetails(id).subscribe((data) => {
-      this.selectedFullDetails = data;
-      this.showDetailsModal = true;
-      this.loading = false;
-    }, () => this.loading = false);
+    this.examService.getFullDetails(id).subscribe({
+      next: (data: ExamResponseDTO) => {
+        this.selectedFullDetails = data;
+        this.showDetailsModal = true;
+        this.loading = false;
+      },
+      error: (err: any) => {
+        this.showToast(err?.message || 'Impossible de charger les détails.', 'error');
+        this.loading = false;
+      }
+    });
   }
 
   closeDetailsModal(): void {
@@ -155,7 +333,21 @@ export class ExamsComponent implements OnInit {
     this.selectedFullDetails = null;
   }
 
-  getStatusClass(status: string): string {
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  trackById(index: number, exam: Examen): number {
+    return exam.id ?? index;
+  }
+
+  getStatusClass(status: ExamStatus | string): string {
     return `status-${status}`;
+  }
+
+  isCanTerminate(status: ExamStatus): boolean {
+    return status === ExamStatus.EN_COURS;
+  }
+
+  getPages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i);
   }
 }

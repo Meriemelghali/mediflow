@@ -45,6 +45,49 @@ spring:
               uri: lb://notification-service
               predicates:
                 - Path=/api/notifications/**
+            # ── Swagger API-docs routes (for centralized Swagger UI) ──
+            - id: exam-service-docs
+              uri: lb://exam-service
+              predicates:
+                - Path=/exam-service/v3/api-docs
+              filters:
+                - RewritePath=/exam-service/v3/api-docs, /v3/api-docs
+            - id: user-service-docs
+              uri: lb://user-service
+              predicates:
+                - Path=/user-service/v3/api-docs
+              filters:
+                - RewritePath=/user-service/v3/api-docs, /v3/api-docs
+            - id: billing-service-docs
+              uri: lb://billing-service
+              predicates:
+                - Path=/billing-service/v3/api-docs
+              filters:
+                - RewritePath=/billing-service/v3/api-docs, /v3/api-docs
+            - id: appointment-service-docs
+              uri: lb://appointment-service
+              predicates:
+                - Path=/appointment-service/v3/api-docs
+              filters:
+                - RewritePath=/appointment-service/v3/api-docs, /v3/api-docs
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/mediflow-realm
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: exam-service
+        url: /exam-service/v3/api-docs
+      - name: user-service
+        url: /user-service/v3/api-docs
+      - name: billing-service
+        url: /billing-service/v3/api-docs
+      - name: appointment-service
+        url: /appointment-service/v3/api-docs
 
 eureka:
   client:
