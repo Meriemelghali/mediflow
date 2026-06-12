@@ -161,14 +161,42 @@ function Start-Frontend() {
 # ------------------------------------------------------------
 #  1. Free up ports
 # ------------------------------------------------------------
-foreach ($p in @(8888, 8761, 8090, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 4200)) {
+foreach ($p in @(8888, 8761, 8090, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 5672, 4200)) {
   Stop-PortIfSafe $p
+}
+
+# ------------------------------------------------------------
+#  Start RabbitMQ via Docker Compose
+# ------------------------------------------------------------
+function Start-RabbitMQ() {
+  # Verifier si Docker est disponible
+  if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    "SKIP RabbitMQ (Docker not found - install Docker Desktop)" | Out-Host
+    return
+  }
+  "Starting RabbitMQ (Docker)..." | Out-Host
+  try {
+    # On désactive temporairement ErrorActionPreference = Stop pour éviter que 
+    # les avertissements Docker (stderr) ne déclenchent l'exception
+    $oldErr = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    & docker compose up rabbitmq -d | Out-Null
+    $ErrorActionPreference = $oldErr
+    "RabbitMQ container started. UI: http://localhost:15672 (guest/guest)" | Out-Host
+  } catch {
+    "WARNING: Failed to start RabbitMQ via Docker: $_" | Out-Host
+  }
 }
 
 # ------------------------------------------------------------
 #  2. Infrastructure (sequential, order matters)
 # ------------------------------------------------------------
-"=== [1/3] Starting infrastructure ===" | Out-Host
+"=== [0/4] Starting RabbitMQ (message broker) ===" | Out-Host
+Start-RabbitMQ
+$ok = Wait-Port 5672 60
+"READY RabbitMQ port=5672 ok=$ok" | Out-Host
+
+"=== [1/4] Starting infrastructure ===" | Out-Host
 
 Start-Svc "config-server" (Join-Path $root "Backend\infrastructure\config-server")
 $ok = Wait-Port 8888 300
@@ -185,7 +213,7 @@ $ok = Wait-Port 8090 300
 # ------------------------------------------------------------
 #  3. Business microservices
 # ------------------------------------------------------------
-"=== [2/3] Starting business microservices ===" | Out-Host
+"=== [2/4] Starting business microservices ===" | Out-Host
 
 # Node.js user-service (différent des autres !)
 Start-NodeSvc "user-service" (Join-Path $root "Backend\services\user-service")
@@ -219,7 +247,7 @@ foreach ($s in $services) {
 # ------------------------------------------------------------
 #  4. Frontend
 # ------------------------------------------------------------
-"=== [3/3] Starting frontend ===" | Out-Host
+"=== [3/4] Starting frontend ===" | Out-Host
 Start-Frontend
 $ok = Wait-Port 4200 300
 "READY Frontend port=4200 ok=$ok" | Out-Host
@@ -231,6 +259,7 @@ $ok = Wait-Port 4200 300
 "========================================="            | Out-Host
 "  All services launched"                              | Out-Host
 "========================================="            | Out-Host
+"RabbitMQ UI  : http://localhost:15672  (guest/guest)" | Out-Host
 "Config Server : http://localhost:8888"                | Out-Host
 "Eureka        : http://localhost:8761"                | Out-Host
 "API Gateway   : http://localhost:8090"                | Out-Host

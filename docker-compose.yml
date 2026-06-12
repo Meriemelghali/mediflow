@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ─────────────────────────────────────────────
@@ -136,6 +134,22 @@ services:
 # ─────────────────────────────────────────────
 #  NETWORK & VOLUMES
 # ─────────────────────────────────────────────
+  # ==========================================
+  # Message Broker (RabbitMQ)
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # Port for AMQP communication
+      - "15672:15672" # Port for Management UI
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ==========================================
   # Node.js Services
   # ==========================================
