@@ -14,12 +14,12 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
 
-    @PostMapping
+    @PostMapping({"", "/"})
     public Room addRoom(@RequestBody Room room) {
         return roomService.addRoom(room);
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public List<Room> getAllRooms() {
         return roomService.getAllRooms();
     }
@@ -27,6 +27,11 @@ public class RoomController {
     @GetMapping("/{id}")
     public Room getRoomById(@PathVariable Long id) {
         return roomService.getRoomById(id);
+    }
+
+    @PutMapping("/{id}")
+    public Room updateRoom(@PathVariable Long id, @RequestBody Room room) {
+        return roomService.updateRoom(id, room);
     }
 
     @DeleteMapping("/{id}")

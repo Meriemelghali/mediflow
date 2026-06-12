@@ -1,54 +1,48 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/User');
 
 class UserService {
   async getAllUsers() {
-    // On exclut le mot de passe de la liste
-    return await User.find().select('-password');
+    return await User.find().select('-password -resetPasswordToken -resetPasswordExpires');
   }
 
   async getUserByPatientCode(code) {
-    const user = await User.findOne({ patientCode: code }).select('-password');
+    const user = await User.findOne({ patientCode: code }).select('-password -resetPasswordToken -resetPasswordExpires');
     if (!user) throw new Error('Patient not found');
     return user;
   }
 
   async createUser(userData) {
-    // Vérifier si l'email existe déjà
     const existingUser = await User.findOne({ email: userData.email.toLowerCase() });
     if (existingUser) {
       throw new Error('Email already exists');
     }
 
-    // Auto-incrément du patientCode si non fourni
     if (!userData.patientCode) {
       const last = await User.findOne().sort('-patientCode');
       userData.patientCode = last && last.patientCode ? last.patientCode + 1 : 1;
     }
 
-    // Nettoyage de sécurité : on gère les infos par rôle
     const role = userData.role || 'PATIENT';
     if (role !== 'PATIENT') delete userData.patientInfo;
     if (role !== 'DOCTOR') delete userData.doctorInfo;
     if (role !== 'PHARMACIST') delete userData.pharmacistInfo;
 
-    // Convert input role to roles array and activeRole for the new schema
     userData.roles = [role];
     userData.activeRole = role;
 
-    // Hachage du mot de passe
     const salt = await bcrypt.genSalt(10);
     userData.password = await bcrypt.hash(userData.password, salt);
 
     const user = await User.create(userData);
-    
-    // On ne renvoie pas le mot de passe
+
     const userObj = user.toObject();
     delete userObj.password;
+    delete userObj.resetPasswordToken;
+    delete userObj.resetPasswordExpires;
 
-    // Appel au Notification Service pour envoyer l'email de bienvenue
     try {
-      // Notification service port is 8086 based on its .env
       const response = await fetch('http://localhost:8086/api/notifications/email/welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,10 +54,10 @@ class UserService {
       if (!response.ok) {
         console.warn('Echec envoi email de bienvenue:', await response.text());
       } else {
-        console.log('Email de bienvenue envoyé via Notification Service');
+        console.log('Email de bienvenue envoye via Notification Service');
       }
     } catch (err) {
-      console.warn('Erreur lors de lajout de l\'appel notification-service:', err.message);
+      console.warn("Erreur lors de l'appel notification-service:", err.message);
     }
 
     return userObj;
@@ -83,14 +77,54 @@ class UserService {
     return { message: 'Password updated successfully' };
   }
 
-  async forgotPassword(email, newPassword) {
+  async forgotPassword(email) {
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      return { message: 'If this email exists, a reset link has been sent' };
+    }
 
-    // Dans un vrai système, on validerait un token envoyé par email.
-    // Ici, on met à jour directement.
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    try {
+      const response = await fetch('http://localhost:8086/api/notifications/email/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          firstName: user.firstName,
+          resetUrl
+        })
+      });
+      if (!response.ok) {
+        console.warn('Echec envoi email reset password:', await response.text());
+      }
+    } catch (err) {
+      console.warn("Erreur lors de l'appel notification-service reset password:", err.message);
+      console.log('Reset password link:', resetUrl);
+    }
+
+    return { message: 'If this email exists, a reset link has been sent' };
+  }
+
+  async resetPassword(token, newPassword) {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) throw new Error('Invalid or expired reset token');
+
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
 
     return { message: 'Password reset successfully' };
@@ -102,7 +136,7 @@ class UserService {
       throw new Error('Invalid role');
     }
 
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
     if (!user) throw new Error('User not found');
 
     user.activeRole = newRole;
@@ -115,7 +149,7 @@ class UserService {
   }
 
   async toggleStatus(userId, isActive) {
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select('-password -resetPasswordToken -resetPasswordExpires');
     if (!user) throw new Error('User not found');
 
     user.isActive = isActive;
@@ -133,7 +167,6 @@ class UserService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error('Invalid credentials');
 
-    // Create JWT Payload
     const payload = {
       id: user._id,
       patientCode: user.patientCode,
@@ -143,16 +176,14 @@ class UserService {
       lastName: user.lastName
     };
 
-    // Use a secret from env or fallback
     const secret = process.env.JWT_SECRET || 'supersecret_mediflow_2026';
-    
-    // Sign token for 6 hours
     const token = jwt.sign(payload, secret, { expiresIn: '6h' });
 
-    // Return token and user info
     const userObj = user.toObject();
     delete userObj.password;
-    
+    delete userObj.resetPasswordToken;
+    delete userObj.resetPasswordExpires;
+
     return { token, user: userObj };
   }
 }

@@ -18,6 +18,14 @@ export const routes: Routes = [
 
   // ── Dashboard principal (sidebar commune) ──
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./app/core/Auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'reset-password/:token',
+    loadComponent: () => import('./app/core/Auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
+  {
     path: 'dashboard',
     component: AuthLayoutComponent,
     canActivate: [authGuard],
@@ -41,6 +49,10 @@ export const routes: Routes = [
       {
         path: 'billing',
         loadComponent: () => import('./app/features/billing/billing.component').then(m => m.BillingComponent)
+      },
+      {
+        path: 'rooms',
+        loadComponent: () => import('./app/features/room/room.component').then(m => m.RoomComponent)
       },
     ]
   },
