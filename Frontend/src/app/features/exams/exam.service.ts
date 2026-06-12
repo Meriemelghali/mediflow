@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-<<<<<<< HEAD:Frontend/src/app/services/exam.service.ts
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -8,11 +7,6 @@ import {
   PageExamen, ExamStatus, Resultat, Patient,
   ExamResponseDTO
 } from './exam.model';
-=======
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Examen, PageExamen, ExamStatus, Resultat, Patient } from './exam.model';
->>>>>>> 1914c5d92eadbc4cd31f6fbbff386d2477162c2f:Frontend/src/app/features/exams/exam.service.ts
 
 @Injectable({
   providedIn: 'root'
