@@ -1,22 +1,44 @@
+<!-- ═══════════════════════════════════════════════════════════
+     TOAST NOTIFICATIONS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="toast-container">
+  <div *ngFor="let t of toasts" class="toast" [ngClass]="'toast-' + t.type">
+    <div class="toast-icon">
+      <svg *ngIf="t.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <svg *ngIf="t.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+      <svg *ngIf="t.type === 'warning'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <svg *ngIf="t.type === 'info'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    </div>
+    <span class="toast-msg">{{ t.message }}</span>
+    <button class="toast-close" (click)="dismissToast(t.id)">✕</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE PRINCIPALE
+     ═══════════════════════════════════════════════════════════ -->
 <div class="dashboard-container">
+
+  <!-- Header -->
   <div class="header-section">
     <div>
       <h1>Gestion des Examens</h1>
       <p class="subtitle">Suivi et management des analyses médicales MediFlow</p>
     </div>
-    <button class="btn btn-primary" (click)="openAddModal()">
+    <button class="btn btn-primary" id="btn-new-exam" (click)="openAddModal()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       Nouvel Examen
     </button>
   </div>
 
+  <!-- Filters -->
   <div class="filters-card">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input type="text" [(ngModel)]="keyword" (input)="onSearch()" placeholder="Rechercher un examen par nom...">
+      <input id="search-keyword" type="text" [(ngModel)]="keyword" (input)="onSearch()" placeholder="Rechercher un examen par nom...">
     </div>
     <div class="filter-box">
-      <select [(ngModel)]="statusFilter" (change)="onSearch()">
+      <select id="filter-status" [(ngModel)]="statusFilter" (change)="onSearch()">
         <option value="">Tous les statuts</option>
         <option value="PLANIFIE">Planifié</option>
         <option value="EN_COURS">En Cours</option>
@@ -26,7 +48,11 @@
     </div>
   </div>
 
+  <!-- Table -->
   <div class="table-container" [class.loading]="loading">
+    <div class="loading-bar" *ngIf="loading">
+      <div class="loading-progress"></div>
+    </div>
     <table>
       <thead>
         <tr>
@@ -39,206 +65,334 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let exam of exams" class="fade-in">
-          <td><span class="text-tertiary">#</span>{{exam.id}}</td>
-          <td class="bold">{{exam.nomExamen}}</td>
-          <td>{{exam.dateExamen | date:'dd MMM yyyy'}}</td>
-          <td>{{getPatientName(exam.patientId)}}</td>
+        <tr *ngFor="let exam of exams; trackBy: trackById" class="fade-in">
+          <td><span class="text-tertiary">#</span>{{ exam.id }}</td>
+          <td class="bold">{{ exam.nomExamen }}</td>
+          <td class="date-cell">{{ exam.dateExamen | date:'dd MMM yyyy' }}</td>
           <td>
-            <span class="badge" [ngClass]="getStatusClass(exam.status)">
+            <div class="patient-cell">
+              <div class="patient-avatar">{{ getPatientName(exam.patientId).charAt(0) }}</div>
+              <span>{{ getPatientName(exam.patientId) }}</span>
+            </div>
+          </td>
+          <td>
+            <button class="badge badge-btn" [ngClass]="getStatusClass(exam.status)"
+                    (click)="openStatusModal(exam)"
+                    [title]="'Cliquer pour changer le statut'">
               <span class="status-dot-mini"></span>
-              {{exam.status}}
-            </span>
+              {{ statusLabels[exam.status] }}
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
           </td>
           <td class="actions-cell">
-            <button class="btn-icon" (click)="viewFullDetails(exam.id!)" title="Vérification OpenFeign">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+            <button class="btn-icon" id="btn-details-{{ exam.id }}" (click)="viewFullDetails(exam.id!)" title="Détails complets (Feign)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
             </button>
-            <button class="btn-icon" (click)="openResultsModal(exam)" title="Résultats Médicaux">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5"/><path d="M14 2v7.5"/><path d="M8.5 2h7"/><path d="M14 14.5a2 2 0 1 1-4 0"/><path d="M4 9.5c0-.8.7-1.5 1.5-1.5h13c.8 0 1.5.7 1.5 1.5v10c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2v-10Z"/></svg>
+            <button class="btn-icon" id="btn-results-{{ exam.id }}" (click)="openResultsModal(exam)" title="Résultats médicaux">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5"/><path d="M14 2v7.5"/><path d="M8.5 2h7"/><path d="M14 14.5a2 2 0 1 1-4 0"/><path d="M4 9.5c0-.8.7-1.5 1.5-1.5h13c.8 0 1.5.7 1.5 1.5v10c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2v-10Z"/></svg>
             </button>
-            <button class="btn-icon" (click)="openEditModal(exam)" title="Modifier">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <button class="btn-icon" id="btn-edit-{{ exam.id }}" (click)="openEditModal(exam)" title="Modifier">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="btn-icon delete" (click)="deleteExam(exam.id!)" title="Supprimer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <button class="btn-icon delete" id="btn-delete-{{ exam.id }}" (click)="deleteExam(exam.id!)" title="Supprimer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </td>
         </tr>
         <tr *ngIf="exams.length === 0 && !loading">
-          <td colspan="6" class="empty-state">Aucun examen ne correspond à votre recherche.</td>
+          <td colspan="6" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3; margin-bottom: 1rem;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <p>Aucun examen ne correspond à votre recherche.</p>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 
+  <!-- Pagination -->
   <div class="pagination" *ngIf="totalPages > 1">
-    <button [disabled]="currentPage === 0" (click)="changePage(currentPage - 1)">Précédent</button>
-    <span>Page {{currentPage + 1}} sur {{totalPages}}</span>
-    <button [disabled]="currentPage === totalPages - 1" (click)="changePage(currentPage + 1)">Suivant</button>
+    <button [disabled]="currentPage === 0" (click)="changePage(currentPage - 1)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <button *ngFor="let p of getPages()" [class.active]="p === currentPage" (click)="changePage(p)">{{ p + 1 }}</button>
+    <button [disabled]="currentPage === totalPages - 1" (click)="changePage(currentPage + 1)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
   </div>
+
 </div>
 
-<!-- Modal Ajout -->
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Créer un examen
+     ═══════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Nouvel Examen</h2>
       <button class="close-btn" (click)="closeAddModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label>Type d'examen</label>
         <div class="input-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <input type="text" [(ngModel)]="newExam.nomExamen" placeholder="ex: Analyse Sanguine, Scanner...">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <input id="new-exam-name" type="text" [(ngModel)]="newExam.nomExamen" placeholder="ex: Analyse Sanguine, Scanner...">
         </div>
       </div>
       <div class="form-group">
         <label>Patient concerné</label>
         <div class="input-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <select [(ngModel)]="newExam.patientId">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <select id="new-exam-patient" [(ngModel)]="newExam.patientId">
             <option [value]="0" disabled>Choisir un patient...</option>
-            <option *ngFor="let p of patients" [value]="p.id">{{p.nom}} {{p.prenom}}</option>
+            <option *ngFor="let p of patients" [value]="p.id">{{ p.nom }} {{ p.prenom }}</option>
           </select>
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="closeAddModal()">Annuler</button>
-      <button class="btn btn-primary" (click)="createExam()">Confirmer la création</button>
+      <button class="btn btn-primary" id="btn-confirm-create" (click)="createExam()">Confirmer la création</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Edit -->
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Modifier un examen
+     ═══════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="showEditModal" (click)="showEditModal = false">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Modifier l'Examen</h2>
+      <h2>Modifier l'Examen <span class="text-tertiary" style="font-size:1rem;">#{{ selectedExam?.id }}</span></h2>
       <button class="close-btn" (click)="showEditModal = false">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
-    <div class="modal-body" *ngIf="selectedExam">
+    <div class="modal-body">
       <div class="form-group">
         <label>Nom de l'examen</label>
         <div class="input-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <input type="text" [(ngModel)]="selectedExam.nomExamen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <input id="edit-exam-name" type="text" [(ngModel)]="editExamDTO.nomExamen">
         </div>
       </div>
       <div class="form-group">
-        <label>Statut actuel</label>
+        <label>Patient</label>
         <div class="input-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-          <select [(ngModel)]="selectedExam.status">
-            <option value="PLANIFIE">Planifié</option>
-            <option value="EN_COURS">En Cours</option>
-            <option value="TERMINE">Terminé</option>
-            <option value="ANNULE">Annulé</option>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <select id="edit-exam-patient" [(ngModel)]="editExamDTO.patientId">
+            <option *ngFor="let p of patients" [value]="p.id">{{ p.nom }} {{ p.prenom }}</option>
           </select>
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="showEditModal = false">Annuler</button>
-      <button class="btn btn-primary" (click)="updateExam()">Enregistrer les modifications</button>
+      <button class="btn btn-primary" id="btn-confirm-edit" (click)="updateExam()">Enregistrer les modifications</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Résultats -->
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Changer le statut (avec avertissement RabbitMQ)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showStatusModal && pendingStatusChange" (click)="showStatusModal = false; pendingStatusChange = null">
+  <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Changer le statut</h2>
+      <button class="close-btn" (click)="showStatusModal = false; pendingStatusChange = null">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Changer le statut de <strong>{{ pendingStatusChange.exam.nomExamen }}</strong>
+      </p>
+      <div class="status-picker">
+        <button *ngFor="let s of statusOptions"
+                class="status-option"
+                [ngClass]="'status-' + s"
+                [class.selected]="pendingStatusChange.newStatus === s"
+                (click)="pendingStatusChange.newStatus = s">
+          <span class="status-dot-mini"></span>
+          {{ statusLabels[s] }}
+        </button>
+      </div>
+      <!-- Avertissement RabbitMQ si TERMINE sélectionné -->
+      <div class="rabbitmq-notice" *ngIf="pendingStatusChange.newStatus === 'TERMINE'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        <span>Une facture sera envoyée automatiquement au <strong>billing-service</strong> via <strong>RabbitMQ</strong>.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showStatusModal = false; pendingStatusChange = null">Annuler</button>
+      <button class="btn btn-primary" id="btn-confirm-status" (click)="confirmStatusChange()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Résultats médicaux
+     ═══════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="showResultsModal" (click)="showResultsModal = false">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Résultats : {{selectedExam?.nomExamen}}</h2>
+      <h2>Résultats : {{ selectedExam?.nomExamen }}</h2>
       <button class="close-btn" (click)="showResultsModal = false">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     <div class="modal-body">
       <div class="results-list">
         <div *ngFor="let r of selectedExam?.resultats" class="result-item fade-in">
-          <div class="result-info">
-            <span class="val">{{r.valeur}}</span>
-            <span class="unite">{{r.unite}}</span>
-          </div>
-          <div class="result-actions">
-            <button class="btn-icon mini delete" (click)="deleteResult(r.id!)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </button>
-          </div>
+          <ng-container *ngIf="editingResult?.id !== r.id; else editResultTpl">
+            <div class="result-info">
+              <span class="val">{{ r.valeur }}</span>
+              <span class="unite">{{ r.unite }}</span>
+            </div>
+            <div class="result-actions">
+              <button class="btn-icon mini" (click)="startEditResult(r)" title="Modifier">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="btn-icon mini delete" (click)="deleteResult(r.id!)" title="Supprimer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </ng-container>
+          <ng-template #editResultTpl>
+            <div class="edit-result-inline">
+              <input type="text" [(ngModel)]="editResultDTO.valeur" placeholder="Valeur">
+              <input type="text" [(ngModel)]="editResultDTO.unite" placeholder="Unité" style="max-width:110px">
+              <button class="btn-icon mini" (click)="saveEditResult()" style="color: var(--accent);">✓</button>
+              <button class="btn-icon mini" (click)="cancelEditResult()">✕</button>
+            </div>
+          </ng-template>
         </div>
-        <p *ngIf="selectedExam?.resultats?.length === 0" class="empty-state">Aucun résultat enregistré pour le moment.</p>
+        <p *ngIf="selectedExam?.resultats?.length === 0" class="empty-state">Aucun résultat enregistré.</p>
       </div>
-      
+
+      <!-- Ajouter un résultat (si pas TERMINE ni ANNULE) -->
       <div class="add-result-form" *ngIf="selectedExam?.status !== 'TERMINE' && selectedExam?.status !== 'ANNULE'">
-        <div style="margin: 2rem 0 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
-          <h4 style="font-weight: 800; color: var(--text-primary); margin-bottom: 1rem;">Ajouter une mesure</h4>
+        <div class="add-result-section">
+          <h4>Ajouter une mesure</h4>
           <div class="form-row">
-            <input type="text" [(ngModel)]="newResult.valeur" placeholder="Valeur (ex: 120)">
-            <input type="text" [(ngModel)]="newResult.unite" placeholder="Unité (ex: mg/dL)" style="max-width: 120px;">
-            <button class="btn btn-primary" style="padding: 0.625rem;" (click)="addResult()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <input id="new-result-value" type="text" [(ngModel)]="newResult.valeur" placeholder="Valeur (ex: 120)">
+            <input id="new-result-unit" type="text" [(ngModel)]="newResult.unite" placeholder="Unité (ex: mg/dL)">
+            <button class="btn btn-primary btn-sm" (click)="addResult()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
           </div>
         </div>
+      </div>
+      <div class="status-locked-notice" *ngIf="selectedExam?.status === 'TERMINE' || selectedExam?.status === 'ANNULE'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Examen {{ statusLabels[selectedExam?.status!] }} — impossible d'ajouter des résultats.
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Détails Full (OpenFeign) -->
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — Détails Feign (patient + factures)
+     ═══════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
   <div class="modal-card wide" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Vérification Synchronisée <span class="badge status-PLANIFIE">OpenFeign</span></h2>
+      <div>
+        <h2>Détails complets</h2>
+        <p style="margin:0; font-size:0.85rem; color: var(--text-tertiary); font-weight:600;">
+          Données agrégées via <span class="chip chip-feign">OpenFeign</span>
+        </p>
+      </div>
       <button class="close-btn" (click)="closeDetailsModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
-    <div class="modal-body">
-      <div *ngIf="selectedFullDetails" class="details-grid">
+    <div class="modal-body" *ngIf="selectedFullDetails">
+      <div class="details-grid">
+
+        <!-- Section locale -->
         <div class="detail-section local">
-          <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Exam Service (Local)</h3>
-          <p><strong>Désignation:</strong> {{selectedFullDetails.examen.nomExamen}}</p>
-          <p><strong>Enregistré le:</strong> {{selectedFullDetails.examen.dateExamen | date:'medium'}}</p>
-          <p><strong>Statut:</strong> <span class="badge" [ngClass]="getStatusClass(selectedFullDetails.examen.status)">{{selectedFullDetails.examen.status}}</span></p>
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            exam-service
+          </h3>
+          <div class="detail-item">
+            <span class="detail-label">Désignation</span>
+            <span class="detail-value bold">{{ selectedFullDetails.examen.nomExamen }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Enregistré le</span>
+            <span class="detail-value">{{ selectedFullDetails.examen.dateExamen | date:'dd MMM yyyy, HH:mm' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Statut</span>
+            <span class="badge" [ngClass]="getStatusClass(selectedFullDetails.examen.status)">
+              <span class="status-dot-mini"></span>
+              {{ statusLabels[selectedFullDetails.examen.status] }}
+            </span>
+          </div>
+          <div class="detail-item" *ngIf="selectedFullDetails.examen.resultats?.length">
+            <span class="detail-label">Résultats</span>
+            <span class="detail-value">{{ selectedFullDetails.examen.resultats?.length }} mesure(s)</span>
+          </div>
         </div>
-        
+
+        <!-- Section distante (patient + factures) -->
         <div class="detail-section remote">
-          <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> User & Billing (Feign)</h3>
-          
-          <div *ngIf="selectedFullDetails.patient; else noPatient" style="margin-bottom: 1.5rem;">
-            <p><strong>Identité:</strong> {{selectedFullDetails.patient.nom}} {{selectedFullDetails.patient.prenom}}</p>
-            <p><strong>Référence Patient:</strong> <span class="text-tertiary">#{{selectedFullDetails.patient.id}}</span></p>
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            Services distants <span class="chip chip-feign" style="font-size:0.7rem; margin-left: 0.5rem;">Feign</span>
+          </h3>
+
+          <!-- Patient -->
+          <div *ngIf="selectedFullDetails.patient; else noPatient" class="remote-block">
+            <p class="remote-block-title">Patient</p>
+            <div class="detail-item">
+              <span class="detail-label">Identité</span>
+              <span class="detail-value bold">{{ selectedFullDetails.patient!.nom }} {{ selectedFullDetails.patient!.prenom }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedFullDetails.patient!.email">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ selectedFullDetails.patient!.email }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Réf. Patient</span>
+              <span class="detail-value text-tertiary">#{{ selectedFullDetails.patient!.id }}</span>
+            </div>
           </div>
           <ng-template #noPatient>
-            <p style="color: var(--status-cancelled); font-weight: 700;">⚠️ Patient introuvable (User Service)</p>
+            <div class="alert-inline warning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              Patient introuvable (user-service indisponible)
+            </div>
           </ng-template>
 
-          <div style="border-top: 1px solid #fee2e2; padding-top: 1.25rem;">
-            <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 0.75rem; color: #b91c1c;">Factures associées</h4>
+          <!-- Factures -->
+          <div class="remote-block" style="margin-top: 1.5rem;">
+            <p class="remote-block-title">Facturations <span class="chip chip-rabbit">RabbitMQ</span></p>
             <div class="bills-list" *ngIf="selectedFullDetails.bills && selectedFullDetails.bills.length > 0; else noBills">
               <div *ngFor="let b of selectedFullDetails.bills" class="bill-mini-card">
-                <span>Ref: <span class="bold">{{b.reference}}</span></span>
-                <span class="price">{{b.montantTotal}} DT</span>
-                <span class="status-dot" [class.paid]="b.statut === 'PAYE'" [title]="b.statut"></span>
+                <span class="bill-ref">{{ b.reference }}</span>
+                <span class="price">{{ b.montantTotal }} DT</span>
+                <span class="bill-status" [class.paid]="b.statut === 'PAYE'">
+                  <span class="status-dot"></span>
+                  {{ b.statut === 'PAYE' ? 'Payé' : 'Non payé' }}
+                </span>
               </div>
             </div>
             <ng-template #noBills>
-              <p class="text-tertiary" style="font-size: 0.85rem;">Aucune facturation trouvée pour cet examen.</p>
+              <p class="text-tertiary" style="font-size: 0.85rem; margin-top: 0.5rem;">Aucune facture pour cet examen.</p>
             </ng-template>
           </div>
         </div>
+
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" (click)="closeDetailsModal()">Fermer les détails</button>
+      <button class="btn btn-primary" (click)="closeDetailsModal()">Fermer</button>
     </div>
   </div>
 </div>
