@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { AuthLayoutComponent } from './app/layouts/auth-layout/auth-layout.component';
+import { BackofficeLayoutComponent } from './app/layouts/backoffice-layout/backoffice-layout.component';
 import { authGuard } from './app/core/guards/auth.guard';
+import { adminGuard } from './app/core/guards/admin.guard';
 
 export const routes: Routes = [
   // par défaut
@@ -13,6 +15,8 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () => import('./app/core/Auth/register/register.component').then(m => m.RegisterComponent)
   },
+
+  // ── Dashboard principal (sidebar commune) ──
   {
     path: 'dashboard',
     component: AuthLayoutComponent,
@@ -38,6 +42,20 @@ export const routes: Routes = [
         path: 'billing',
         loadComponent: () => import('./app/features/billing/billing.component').then(m => m.BillingComponent)
       },
+    ]
+  },
+
+  // ── Administration (navbar admin dédiée) ──
+  {
+    path: 'admin',
+    component: BackofficeLayoutComponent,
+    canActivate: [authGuard, adminGuard],
+    children: [
+      {
+        path: 'backoffice',
+        loadComponent: () => import('./app/features/backoffice/backoffice.component').then(m => m.BackofficeComponent)
+      },
+      { path: '', redirectTo: 'backoffice', pathMatch: 'full' }
     ]
   },
 ];
