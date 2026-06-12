@@ -161,7 +161,7 @@ function Start-Frontend() {
 # ------------------------------------------------------------
 #  1. Free up ports
 # ------------------------------------------------------------
-foreach ($p in @(8888, 8761, 8080, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 4200)) {
+foreach ($p in @(8888, 8761, 8090, 8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 4200)) {
   Stop-PortIfSafe $p
 }
 
@@ -179,8 +179,8 @@ $ok = Wait-Port 8761 300
 "READY discovery-service port=8761 ok=$ok" | Out-Host
 
 Start-Svc "api-gateway" (Join-Path $root "Backend\infrastructure\api-gateway")
-$ok = Wait-Port 8080 300
-"READY api-gateway port=8080 ok=$ok" | Out-Host
+$ok = Wait-Port 8090 300
+"READY api-gateway port=8090 ok=$ok" | Out-Host
 
 # ------------------------------------------------------------
 #  3. Business microservices
@@ -192,6 +192,7 @@ Start-NodeSvc "user-service" (Join-Path $root "Backend\services\user-service")
 Start-NodeSvc "notification-service" (Join-Path $root "Backend\services\notification-service")
 
 # Spring Boot services
+Start-Svc "patient-service"      (Join-Path $root "Backend\services\patient-service")
 Start-Svc "appointment-service"  (Join-Path $root "Backend\services\appointment-service")
 Start-Svc "assurance-service"    (Join-Path $root "Backend\services\assurance-service")
 Start-Svc "billing-service"      (Join-Path $root "Backend\services\billing-service")
@@ -232,7 +233,7 @@ $ok = Wait-Port 4200 300
 "========================================="            | Out-Host
 "Config Server : http://localhost:8888"                | Out-Host
 "Eureka        : http://localhost:8761"                | Out-Host
-"API Gateway   : http://localhost:8080"                | Out-Host
+"API Gateway   : http://localhost:8090"                | Out-Host
 "User Service  : http://localhost:8081  (Node)"        | Out-Host
 "Notification Service : http://localhost:8086  (Node)" | Out-Host
 "Frontend (UI) : http://localhost:4200"                | Out-Host

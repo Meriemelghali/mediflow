@@ -1,0 +1,154 @@
+<section class="auth-page">
+
+  <!-- Left Panel : Branding -->
+  <aside class="auth-panel">
+    <div class="panel-content">
+      <div class="panel-logo">
+        <img src="logo.png" alt="MediFlow" style="width: 150px; height: 150px; border-radius: 28px; object-fit: cover; box-shadow: 0 0 40px rgba(0, 200, 232, 0.45);" />
+      </div>
+      <h1 class="panel-title">Rejoignez MediFlow.</h1>
+      <p class="panel-desc">Créez votre espace patient en quelques secondes et prenez le contrôle de votre santé.</p>
+
+
+    </div>
+    <div class="deco deco-1"></div>
+    <div class="deco deco-2"></div>
+    <div class="deco deco-3"></div>
+  </aside>
+
+  <!-- Right Panel : Register Form -->
+  <main class="auth-form-side">
+    <div class="form-card">
+      <div class="form-header">
+        <h2 class="form-title">Créer un compte</h2>
+        <p class="form-subtitle">Remplissez les informations ci-dessous pour commencer.</p>
+      </div>
+
+      <!-- Success message -->
+      <div class="success-alert" *ngIf="successMessage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ successMessage }}
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate *ngIf="!successMessage">
+
+        <!-- Name row -->
+        <div class="field-row">
+          <div class="field" [class.field-error]="firstName?.invalid && firstName?.touched">
+            <label class="field-label" for="reg-firstname">Prénom</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input id="reg-firstname" type="text" formControlName="firstName" class="field-input" placeholder="Jean" />
+            </div>
+            <span class="field-hint" *ngIf="firstName?.errors?.['required'] && firstName?.touched">Requis.</span>
+            <span class="field-hint" *ngIf="firstName?.errors?.['minlength'] && firstName?.touched">Minimum 2 caractères.</span>
+          </div>
+
+          <div class="field" [class.field-error]="lastName?.invalid && lastName?.touched">
+            <label class="field-label" for="reg-lastname">Nom</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input id="reg-lastname" type="text" formControlName="lastName" class="field-input" placeholder="Dupont" />
+            </div>
+            <span class="field-hint" *ngIf="lastName?.errors?.['required'] && lastName?.touched">Requis.</span>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="field" [class.field-error]="email?.invalid && email?.touched">
+          <label class="field-label" for="reg-email">Adresse email</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input id="reg-email" type="email" formControlName="email" class="field-input" placeholder="nom@exemple.com" autocomplete="email" />
+          </div>
+          <span class="field-hint" *ngIf="email?.errors?.['required'] && email?.touched">L'email est requis.</span>
+          <span class="field-hint" *ngIf="email?.errors?.['email'] && email?.touched">Format invalide.</span>
+        </div>
+
+        <!-- Phone + CNAM row -->
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="reg-phone">Téléphone <span class="optional">(optionnel)</span></label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.32 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <input id="reg-phone" type="tel" formControlName="phone" class="field-input" placeholder="55 123 456" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="reg-cnam">N° CNAM <span class="optional">(optionnel)</span></label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <input id="reg-cnam" type="text" formControlName="cnamNumber" class="field-input" placeholder="CNAM-00001" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field" [class.field-error]="password?.invalid && password?.touched">
+          <label class="field-label" for="reg-password">Mot de passe</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input id="reg-password" [type]="showPassword ? 'text' : 'password'" formControlName="password" class="field-input" placeholder="••••••••" autocomplete="new-password" />
+            <button type="button" class="toggle-pw" (click)="togglePassword()" tabindex="-1">
+              <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <span class="field-hint" *ngIf="password?.errors?.['required'] && password?.touched">Le mot de passe est requis.</span>
+          <span class="field-hint" *ngIf="password?.errors?.['minlength'] && password?.touched">Minimum 6 caractères.</span>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="field" [class.field-error]="confirmPassword?.invalid && confirmPassword?.touched">
+          <label class="field-label" for="reg-confirm-password">Confirmer le mot de passe</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input id="reg-confirm-password" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" class="field-input" placeholder="••••••••" autocomplete="new-password" />
+            <button type="button" class="toggle-pw" (click)="toggleConfirmPassword()" tabindex="-1">
+              <svg *ngIf="!showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <span class="field-hint" *ngIf="confirmPassword?.errors?.['required'] && confirmPassword?.touched">La confirmation est requise.</span>
+          <span class="field-hint" *ngIf="confirmPassword?.errors?.['passwordMismatch'] && confirmPassword?.touched">Les mots de passe ne correspondent pas.</span>
+        </div>
+
+        <!-- Error alert -->
+        <div class="error-alert" *ngIf="errorMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-primary" [class.btn-loading]="loading" [disabled]="loading">
+          <span *ngIf="!loading">Créer mon compte</span>
+          <span *ngIf="loading" class="loader-dots">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+
+      </form>
+
+      <div class="form-footer">
+        <span>Déjà inscrit ?</span>
+        <a routerLink="/login" class="link-accent">Se connecter</a>
+      </div>
+    </div>
+  </main>
+
+</section>

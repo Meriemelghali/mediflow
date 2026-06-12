@@ -24,5 +24,6 @@ public class Examen {
     private ExamStatus status;
 
     @OneToMany(mappedBy = "examen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
     private List<Resultat> resultats = new ArrayList<>();
 }

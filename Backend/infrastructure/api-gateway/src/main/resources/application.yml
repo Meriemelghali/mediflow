@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8090
 
 spring:
   application:
@@ -21,6 +21,10 @@ spring:
               uri: lb://billing-service
               predicates:
                 - Path=/api/factures/**
+            - id: billing-service-paiements
+              uri: lb://billing-service
+              predicates:
+                - Path=/api/paiements/**
             - id: appointment-service
               uri: lb://appointment-service
               predicates:
@@ -36,7 +40,7 @@ spring:
             - id: assurance-service
               uri: lb://assurance-service
               predicates:
-                - Path=/api/assurance/**
+                - Path=/api/assurance,/api/assurance/**
             - id: notification-service
               uri: lb://notification-service
               predicates:

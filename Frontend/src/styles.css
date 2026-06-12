@@ -111,3 +111,29 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: #c8d0e0;
 }
+
+/* ── Admin / Backoffice dark theme override ── */
+body.admin-theme {
+  --bg: #0f1117;
+  --bg-main: #0f1117;
+  --bg-sidebar: #161b27;
+  --surface: #161b27;
+  --border: rgba(255,255,255,0.07);
+  --border-subtle: rgba(255,255,255,0.04);
+  --text-primary: #e2e8f0;
+  --text-secondary: #8892a4;
+  --text-tertiary: #5a6a87;
+  --sidebar-text: #5a6a87;
+  --card-bg: rgba(255,255,255,0.03);
+  --card-border: rgba(255,255,255,0.07);
+  background: #0f1117;
+  color: #e2e8f0;
+}
+
+body.admin-theme ::-webkit-scrollbar-thumb {
+  background: #2a3347;
+}
+
+body.admin-theme ::-webkit-scrollbar-thumb:hover {
+  background: #3a4a60;
+}

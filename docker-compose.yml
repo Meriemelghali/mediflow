@@ -136,11 +136,41 @@ services:
 # ─────────────────────────────────────────────
 #  NETWORK & VOLUMES
 # ─────────────────────────────────────────────
+  # ==========================================
+  # Node.js Services
+  # ==========================================
+  user-service:
+    build:
+      context: ./Backend/services/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - mediflow-network
+
+  # ==========================================
+  # Java Spring Boot Services
+  # ==========================================
+  billing-service:
+    build:
+      context: ./Backend/services/billing-service
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    networks:
+      - mediflow-network
+
+  pharmacy-service:
+    build:
+      context: ./Backend/services/pharmacy-service
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8087"
+    networks:
+      - mediflow-network
 
 networks:
   mediflow-network:
     driver: bridge
-
-volumes:
-  rabbitmq_data:
-  keycloak_data:
