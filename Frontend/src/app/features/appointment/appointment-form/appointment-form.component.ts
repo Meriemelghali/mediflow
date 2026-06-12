@@ -21,7 +21,7 @@ import { Appointment, AppointmentRequest, AppointmentStatus } from '../appointme
 })
 export class AppointmentFormComponent implements OnInit, OnChanges {
   @Input() appointment: Appointment | null = null;
-  @Output() saved = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<Appointment>();
   @Output() cancelled = new EventEmitter<void>();
 
   form!: FormGroup;
@@ -111,9 +111,9 @@ export class AppointmentFormComponent implements OnInit, OnChanges {
       : this.svc.create(request);
 
     obs.subscribe({
-      next: () => {
+      next: (result) => {
         this.submitting = false;
-        this.saved.emit();
+        this.saved.emit(result);
       },
       error: (err: any) => {
         this.submitting = false;

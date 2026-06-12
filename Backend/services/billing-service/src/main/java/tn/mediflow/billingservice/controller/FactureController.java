@@ -30,6 +30,7 @@ public class FactureController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public void deleteFacture(@PathVariable Long id) {
         factureService.deleteFacture(id);
     }

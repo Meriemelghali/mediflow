@@ -61,6 +61,12 @@ export interface PageExamen {
   size: number;
 }
 
+export interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'warning' | 'error' | 'info';
+}
+
 /** Message de retour d'erreur standardisé du backend */
 export interface ApiError {
   timestamp: string;

@@ -35,6 +35,7 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public void deleteRoom(@PathVariable Long id) {
         roomService.deleteRoom(id);
     }

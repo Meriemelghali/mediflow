@@ -11,6 +11,7 @@ import tn.mediflow.assuranceservice.dto.AssuranceUpdateRequest;
 import tn.mediflow.assuranceservice.entity.Assurance;
 import tn.mediflow.assuranceservice.exception.AssuranceNotFoundException;
 import tn.mediflow.assuranceservice.exception.PatientNotFoundException;
+import tn.mediflow.assuranceservice.messaging.AssuranceEventProducer;
 import tn.mediflow.assuranceservice.repository.AssuranceRepository;
 
 @Service
@@ -18,10 +19,13 @@ public class AssuranceService {
 
     private final AssuranceRepository assuranceRepository;
     private final PatientClient patientClient;
+    private final AssuranceEventProducer assuranceEventProducer;
 
-    public AssuranceService(AssuranceRepository assuranceRepository, PatientClient patientClient) {
+    public AssuranceService(AssuranceRepository assuranceRepository, PatientClient patientClient,
+                             AssuranceEventProducer assuranceEventProducer) {
         this.assuranceRepository = assuranceRepository;
         this.patientClient = patientClient;
+        this.assuranceEventProducer = assuranceEventProducer;
     }
 
     @Transactional
@@ -35,7 +39,9 @@ public class AssuranceService {
         assurance.setActive(request.active() == null || request.active());
 
         Assurance saved = assuranceRepository.save(assurance);
-        return toResponse(saved);
+        AssuranceResponse response = toResponse(saved);
+        assuranceEventProducer.publishAssuranceCreated(response);
+        return response;
     }
 
     @Transactional(readOnly = true)

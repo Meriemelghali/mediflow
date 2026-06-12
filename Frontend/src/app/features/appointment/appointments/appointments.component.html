@@ -259,9 +259,17 @@
     <div class="modal-box" (click)="$event.stopPropagation()">
       <app-appointment-form
         [appointment]="editingAppointment"
-        (saved)="onSaved()"
+        (saved)="onSaved($event)"
         (cancelled)="closeModal()"
       />
     </div>
+  </div>
+}
+
+<!-- ── Toast Notification ── -->
+@if (toast()) {
+  <div class="toast" (click)="dismissToast()">
+    <span class="status status-success">Succès</span>
+    <span>{{ toast() }}</span>
   </div>
 }

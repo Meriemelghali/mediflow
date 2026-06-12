@@ -1,0 +1,92 @@
+{
+  "realm": "mediflow-realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "accessTokenLifespan": 3600,
+  "roles": {
+    "realm": [
+      { "name": "ADMIN", "description": "Administrateur de la plateforme MediFlow" },
+      { "name": "DOCTOR", "description": "Médecin" },
+      { "name": "NURSE", "description": "Infirmier / infirmière" },
+      { "name": "PATIENT", "description": "Patient" },
+      { "name": "PHARMACIST", "description": "Pharmacien" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "mediflow-frontend",
+      "name": "MediFlow Frontend (Angular)",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "serviceAccountsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@mediflow.tn",
+      "email": "admin@mediflow.tn",
+      "firstName": "Amina",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "admin123", "temporary": false }
+      ],
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "doctor@mediflow.tn",
+      "email": "doctor@mediflow.tn",
+      "firstName": "Karim",
+      "lastName": "Doctor",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "doctor123", "temporary": false }
+      ],
+      "realmRoles": ["DOCTOR"]
+    },
+    {
+      "username": "nurse@mediflow.tn",
+      "email": "nurse@mediflow.tn",
+      "firstName": "Salma",
+      "lastName": "Nurse",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "nurse123", "temporary": false }
+      ],
+      "realmRoles": ["NURSE"]
+    },
+    {
+      "username": "patient@mediflow.tn",
+      "email": "patient@mediflow.tn",
+      "firstName": "Yassine",
+      "lastName": "Patient",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "patient123", "temporary": false }
+      ],
+      "realmRoles": ["PATIENT"]
+    },
+    {
+      "username": "pharmacist@mediflow.tn",
+      "email": "pharmacist@mediflow.tn",
+      "firstName": "Lina",
+      "lastName": "Pharmacist",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "pharma123", "temporary": false }
+      ],
+      "realmRoles": ["PHARMACIST"]
+    }
+  ]
+}

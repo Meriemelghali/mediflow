@@ -57,6 +57,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         appointmentService.delete(id);
         return ResponseEntity.noContent().build();

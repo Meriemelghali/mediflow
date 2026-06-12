@@ -7,6 +7,7 @@ import tn.mediflow.billingservice.repository.FactureRepository;
 import tn.mediflow.billingservice.client.AppointmentClient;
 import tn.mediflow.billingservice.client.RoomClient;
 import tn.mediflow.billingservice.dto.Appointment;
+import tn.mediflow.billingservice.dto.BillEvent;
 import tn.mediflow.billingservice.dto.Room;
 
 import java.util.List;
@@ -14,6 +15,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FactureService {
+
+    // Tarif de consultation par défaut, utilisé quand le rendez-vous ne précise pas de prix
+    private static final double DEFAULT_CONSULTATION_FEE = 50.0;
 
     private final FactureRepository factureRepository;
     private final AppointmentClient appointmentClient;
@@ -67,7 +71,7 @@ public class FactureService {
         // création facture basée sur appointment
         Facture facture = new Facture();
         facture.setReference("FAC-" + appointment.getId());
-        facture.setMontantTotal(appointment.getPrice());
+        facture.setMontantTotal(appointment.getPrice() != null ? appointment.getPrice() : DEFAULT_CONSULTATION_FEE);
         facture.setStatut("EN_ATTENTE");
 
         return factureRepository.save(facture);
@@ -115,4 +119,14 @@ public class FactureService {
 
     return factureRepository.save(facture);
 }
+
+    // Créée à partir d'un événement RabbitMQ publié par exam-service (billing_exchange / billing_routing_key)
+    public Facture createFactureFromEvent(BillEvent event) {
+        Facture facture = new Facture();
+        facture.setReference(event.getReference());
+        facture.setMontantTotal(event.getMontantTotal());
+        facture.setStatut(event.getStatut() != null ? event.getStatut() : "EN_ATTENTE");
+
+        return factureRepository.save(facture);
+    }
 }

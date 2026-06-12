@@ -22,6 +22,16 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: mediflow
+    password: mediflow123
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/mediflow-realm
 
 eureka:
   client:
@@ -33,19 +43,3 @@ eureka:
 logging:
   level:
     org.hibernate.SQL: debug
-
-# RabbitMQ configuration (local defaults)
-spring:
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
-# Resource server (Keycloak / OIDC) - replace jwk-set-uri with your Keycloak realm certs endpoint
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: http://localhost:8080/realms/mediflow/protocol/openid-connect/certs

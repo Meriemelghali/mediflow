@@ -45,7 +45,7 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.error || 'Email ou mot de passe incorrect';
+        this.errorMessage = err.error?.error_description || 'Email ou mot de passe incorrect';
       }
     });
   }

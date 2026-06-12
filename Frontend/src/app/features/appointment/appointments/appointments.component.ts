@@ -1,9 +1,10 @@
-import { Component, OnInit, afterNextRender } from '@angular/core';
+import { Component, OnInit, afterNextRender, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../appointment.service';
 import { Appointment, AppointmentStatus } from '../appointment.model';
 import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
+import { BillingService } from '../../billing/billing.service';
 
 @Component({
   selector: 'app-appointments',
@@ -25,7 +26,13 @@ export class AppointmentsComponent implements OnInit {
   editingAppointment: Appointment | null = null;
   deletingId: number | null = null;
 
-  constructor(private appointmentService: AppointmentService) {
+  toast = signal<string | null>(null);
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private appointmentService: AppointmentService,
+    private billingService: BillingService
+  ) {
     afterNextRender(() => this.load());
   }
 
@@ -112,9 +119,14 @@ export class AppointmentsComponent implements OnInit {
     this.editingAppointment = null;
   }
 
-  onSaved() {
+  onSaved(saved: Appointment) {
+    const previousStatus = this.editingAppointment?.status;
     this.closeModal();
-    this.load();
+    this.upsertAppointment(saved);
+
+    if (saved.status === 'COMPLETED' && previousStatus !== 'COMPLETED') {
+      this.generateInvoice(saved.id!);
+    }
   }
 
   confirmDelete(id: number) {
@@ -130,7 +142,11 @@ export class AppointmentsComponent implements OnInit {
     const id = this.deletingId;
     this.deletingId = null;
     this.appointmentService.delete(id).subscribe({
-      next: () => this.load(),
+      next: () => {
+        this.appointments = this.appointments.filter((a) => a.id !== id);
+        this.updateStats();
+        this.applyFilters();
+      },
       error: () => {
         this.error = 'Erreur lors de la suppression. Réessayez.';
       },
@@ -144,13 +160,58 @@ export class AppointmentsComponent implements OnInit {
       'COMPLETED',
       'CANCELLED',
     ];
+    const previousStatus = appointment.status;
     const next = order[(order.indexOf(appointment.status) + 1) % order.length];
     this.appointmentService.updateStatus(appointment.id!, next).subscribe({
-      next: () => this.load(),
+      next: (updated) => {
+        this.upsertAppointment(updated);
+        if (updated.status === 'COMPLETED' && previousStatus !== 'COMPLETED') {
+          this.generateInvoice(updated.id!);
+        }
+      },
       error: () => {
         this.error = 'Erreur lors de la mise à jour du statut.';
       },
     });
+  }
+
+  /** Met à jour ou insère un rendez-vous dans la liste locale sans recharger toute la table. */
+  private upsertAppointment(appointment: Appointment) {
+    const idx = this.appointments.findIndex((a) => a.id === appointment.id);
+    if (idx >= 0) {
+      this.appointments[idx] = appointment;
+    } else {
+      this.appointments.unshift(appointment);
+    }
+    this.appointments = [...this.appointments].sort(
+      (a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
+    );
+    this.updateStats();
+    this.applyFilters();
+  }
+
+  /** Déclenche la création automatique de la facture associée au rendez-vous terminé. */
+  private generateInvoice(appointmentId: number) {
+    this.billingService.createFromAppointment(appointmentId).subscribe({
+      next: () => this.showToast('Facture générée automatiquement pour ce rendez-vous.'),
+      error: () => this.showToast("La facture n'a pas pu être générée automatiquement."),
+    });
+  }
+
+  private showToast(message: string) {
+    this.toast.set(message);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => this.toast.set(null), 4000);
+  }
+
+  dismissToast() {
+    this.toast.set(null);
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
   }
 
   statusLabel(status: AppointmentStatus): string {

@@ -84,7 +84,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.3
     container_name: keycloak
-    command: start-dev
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
     environment:
@@ -100,6 +100,7 @@ services:
       retries: 10
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./keycloak/mediflow-realm.json:/opt/keycloak/data/import/mediflow-realm.json
 
   # ─────────────────────────────────────────────
   #  MICROSERVICES
@@ -133,9 +134,160 @@ services:
       timeout: 10s
       retries: 5
 
-# ─────────────────────────────────────────────
-#  NETWORK & VOLUMES
-# ─────────────────────────────────────────────
+  appointment-service:
+    build:
+      context: ./Backend/services/appointment-service
+    container_name: appointment-service
+    ports:
+      - "8082:8082"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mediflow_appointment?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  room-service:
+    build:
+      context: ./Backend/services/room-service
+    container_name: room-service
+    ports:
+      - "8088:8088"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8088/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  assurance-service:
+    build:
+      context: ./Backend/services/assurance-service
+    container_name: assurance-service
+    ports:
+      - "8083:8083"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/assurance_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mediflow
+      - SPRING_RABBITMQ_PASSWORD=mediflow123
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  patient-service:
+    build:
+      context: ./Backend/services/patient-service
+    container_name: patient-service
+    ports:
+      - "8089:8089"
+    networks:
+      - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SERVER_PORT=8089
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8089/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  #  DATABASES
+  # ─────────────────────────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: assurance_db
+    ports:
+      - "5432:5432"
+    networks:
+      - mediflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   # ==========================================
   # Node.js Services
   # ==========================================
@@ -143,12 +295,28 @@ services:
     build:
       context: ./Backend/services/user-service
       dockerfile: Dockerfile
+    container_name: user-service
     ports:
       - "8081:8081"
     environment:
       - NODE_ENV=development
     networks:
       - mediflow-network
+
+  notification-service:
+    build:
+      context: ./Backend/services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8086:8086"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - mediflow-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   # ==========================================
   # Java Spring Boot Services
@@ -157,20 +325,91 @@ services:
     build:
       context: ./Backend/services/billing-service
       dockerfile: Dockerfile
+    container_name: billing-service
     ports:
       - "8084:8084"
     networks:
       - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mediflow_billing?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mediflow
+      - SPRING_RABBITMQ_PASSWORD=mediflow123
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
 
   pharmacy-service:
     build:
       context: ./Backend/services/pharmacy-service
       dockerfile: Dockerfile
+    container_name: pharmacy-service
     ports:
       - "8087:8087"
     networks:
       - mediflow-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/pharmacy_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/mediflow-realm
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8087/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # ==========================================
+  # Frontend
+  # ==========================================
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "4200:80"
+    networks:
+      - mediflow-network
+    depends_on:
+      - api-gateway
 
 networks:
   mediflow-network:
     driver: bridge
+
+volumes:
+  rabbitmq_data:
+  keycloak_data:
+  mysql_data:
+  postgres_data:
