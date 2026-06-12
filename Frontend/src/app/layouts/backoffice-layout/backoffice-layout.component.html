@@ -1,1 +1,45 @@
-<p>backoffice-layout works!</p>
+<div class="bo-layout">
+
+  <!-- ── Topbar Admin ── -->
+  <header class="bo-topbar">
+    <div class="bo-topbar-left">
+      <div class="bo-brand">
+        <div class="bo-brand-icon">
+          <img src="/app-icon.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />
+        </div>
+        <div class="bo-brand-text">
+          <span class="bo-brand-name">MediFlow</span>
+          <span class="bo-brand-tag">Administration</span>
+        </div>
+      </div>
+
+      <nav class="bo-nav">
+        <a class="bo-nav-item" routerLink="/admin/backoffice" routerLinkActive="is-active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Utilisateurs
+        </a>
+      </nav>
+    </div>
+
+    <div class="bo-topbar-right">
+      <a class="bo-back-btn" routerLink="/dashboard/appointments">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour au dashboard
+      </a>
+      <div class="bo-admin-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ADMIN
+      </div>
+      <div class="bo-user-chip">
+        <div class="bo-avatar">{{ initials }}</div>
+        <span class="bo-user-name">{{ user?.firstName }} {{ user?.lastName }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Contenu ── -->
+  <main class="bo-main">
+    <router-outlet />
+  </main>
+
+</div>
