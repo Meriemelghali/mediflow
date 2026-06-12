@@ -360,14 +360,26 @@
           <span class="error-msg" *ngIf="dispenseForm.controls.medicationId.touched && dispenseForm.controls.medicationId.errors?.['required']">Ce champ est obligatoire.</span>
         </label>
 
-        <label class="field">
+        <label class="field combobox-field">
           <span class="field-label">Sélectionner le patient *</span>
-          <select class="input" formControlName="patientId">
-            <option [ngValue]="null" disabled>Choisissez un patient</option>
-            <option *ngFor="let pat of patients()" [ngValue]="pat.id">
-              {{ pat.label }}
-            </option>
-          </select>
+          <div class="combobox-container">
+            <input class="input" 
+                   type="text" 
+                   placeholder="Taper le nom ou code CNAM..." 
+                   [value]="dispenseForm.controls.patientId.value ? selectedPatientLabel() : patientSearch()"
+                   (input)="updatePatientSearch($event)" 
+                   (focus)="isPatientDropdownOpen.set(true)" 
+                   (blur)="onPatientSearchBlur()" />
+            
+            <div class="combobox-dropdown" *ngIf="isPatientDropdownOpen()">
+              <div class="combobox-option" *ngFor="let pat of filteredPatients()" (click)="selectPatient(pat)">
+                {{ pat.label }}
+              </div>
+              <div class="combobox-empty" *ngIf="filteredPatients().length === 0">
+                Aucun patient trouvé
+              </div>
+            </div>
+          </div>
           <span class="error-msg" *ngIf="dispenseForm.controls.patientId.touched && dispenseForm.controls.patientId.errors?.['required']">Ce champ est obligatoire.</span>
         </label>
 

@@ -53,7 +53,7 @@ export class PharmacyService {
     return this.http.get<User[]>(this.userBase).pipe(
       map(users =>
         users
-          .filter(u => u.role === 'PATIENT')
+          .filter(u => u.roles && u.roles.includes('PATIENT'))
           .map(u => ({
             id: u.patientCode,
             label: `${u.patientCode} · ${u.firstName} ${u.lastName}`
