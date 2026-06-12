@@ -103,6 +103,14 @@ public class RoomService {
         existing.setService(updated.getService());
         existing.setType(updated.getType());
         existing.setDescription(updated.getDescription());
+        if (updated.getCapacity() != null) {
+            long activeBeds = bedRepository.countByRoomIdAndActiveTrue(id);
+            if (updated.getCapacity() < activeBeds) {
+                throw new IllegalArgumentException(
+                        "La capacite ne peut pas etre inferieure au nombre de lits actifs (" + activeBeds + ").");
+            }
+            existing.setCapacity(updated.getCapacity());
+        }
         if (updated.getActive() != null) {
             existing.setActive(updated.getActive());
         }

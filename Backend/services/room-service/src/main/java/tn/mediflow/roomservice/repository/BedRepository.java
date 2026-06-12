@@ -13,6 +13,8 @@ public interface BedRepository extends JpaRepository<Bed, Long> {
 
     List<Bed> findByRoomId(Long roomId);
 
+    List<Bed> findByRoomIdAndActiveTrue(Long roomId);
+
     List<Bed> findByStatus(Bed.BedStatus status);
 
     Optional<Bed> findByPatientIdAndStatus(Long patientId, Bed.BedStatus status);
@@ -27,6 +29,8 @@ public interface BedRepository extends JpaRepository<Bed, Long> {
 
     @Query("SELECT COUNT(b) FROM Bed b WHERE b.room.id = :roomId AND b.status = :status")
     long countByRoomIdAndStatus(Long roomId, Bed.BedStatus status);
+
+    long countByRoomIdAndActiveTrue(Long roomId);
 
     List<Bed> findByPatientId(Long patientId);
 }
