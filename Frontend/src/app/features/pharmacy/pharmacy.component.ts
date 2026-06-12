@@ -34,6 +34,8 @@ export class PharmacyComponent implements OnInit {
   categoryFilter = signal('');
   lowStockOnly = signal(false);
   dispensingPatientFilter = signal<number | null>(null);
+  patientSearch = signal('');
+  isPatientDropdownOpen = signal(false);
 
   // Modal control
   modalMode = signal<'create' | 'edit' | 'dispense' | null>(null);
@@ -56,6 +58,19 @@ export class PharmacyComponent implements OnInit {
   });
 
   // Computed properties
+  filteredPatients = computed(() => {
+    const search = this.patientSearch().toLowerCase().trim();
+    if (!search) return this.patients();
+    return this.patients().filter(p => p.label.toLowerCase().includes(search));
+  });
+
+  selectedPatientLabel = computed(() => {
+    const id = this.dispenseForm.controls.patientId.value;
+    if (!id) return '';
+    const pat = this.patients().find(p => p.id === id);
+    return pat ? pat.label : '';
+  });
+
   filteredMedications = computed(() => {
     let list = this.medications();
     const search = this.medicationSearch().toLowerCase().trim();
@@ -317,6 +332,30 @@ export class PharmacyComponent implements OnInit {
   updatePatientFilter(e: Event) {
     const val = (e.target as HTMLSelectElement).value;
     this.dispensingPatientFilter.set(val ? Number(val) : null);
+  }
+
+  updatePatientSearch(e: Event) {
+    const val = (e.target as HTMLInputElement).value;
+    this.patientSearch.set(val);
+    this.isPatientDropdownOpen.set(true);
+    if (this.dispenseForm.controls.patientId.value !== null) {
+      this.dispenseForm.patchValue({ patientId: null });
+    }
+  }
+
+  selectPatient(pat: PatientOption) {
+    this.dispenseForm.patchValue({ patientId: pat.id });
+    this.patientSearch.set('');
+    this.isPatientDropdownOpen.set(false);
+  }
+
+  onPatientSearchBlur() {
+    setTimeout(() => {
+      this.isPatientDropdownOpen.set(false);
+      if (!this.dispenseForm.controls.patientId.value) {
+        this.patientSearch.set('');
+      }
+    }, 200);
   }
 
   // Helper displays
