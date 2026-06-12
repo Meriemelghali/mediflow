@@ -1,8 +1,23 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ExamService } from '../../services/exam.service';
-import { Examen, ExamStatus, PageExamen, Patient, Resultat } from '../../models/exam.model';
+import { ExamService } from './exam.service';
+import {
+  Examen,
+  ExamRequestDTO,
+  ExamResponseDTO,
+  ExamStatus,
+  PageExamen,
+  Patient,
+  Resultat,
+  ResultatRequestDTO
+} from './exam.model';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+}
 
 @Component({
   selector: 'app-exams',
@@ -93,8 +108,8 @@ export class ExamsComponent implements OnInit, OnDestroy {
 
   loadPatients(): void {
     this.examService.getPatients().subscribe({
-      next: data => this.patients = data,
-      error: err => this.showToast('Impossible de charger les patients.', 'warning')
+      next: (data: Patient[]) => this.patients = data,
+      error: (err: any) => this.showToast('Impossible de charger les patients.', 'warning')
     });
   }
 
@@ -107,14 +122,15 @@ export class ExamsComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.examService.getExams(page, this.pageSize, this.keyword || undefined, this.statusFilter || undefined)
       .subscribe({
-        next: (data: any) => {
-          this.exams = data.content.sort((a: any, b: any) => new Date(b.dateExamen).getTime() - new Date(a.dateExamen).getTime());
+        next: (data: PageExamen) => {
+          this.exams = data.content.sort((a, b) => new Date(b.dateExamen || '').getTime() - new Date(a.dateExamen || '').getTime());
           this.totalPages = data.totalPages;
           this.currentPage = data.number;
           this.loading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error(err);
+          this.showToast(err?.message || 'Erreur de chargement des examens.', 'error');
           this.loading = false;
         }
       });
@@ -156,7 +172,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loadExams(0);
         this.showToast('Examen créé avec succès.', 'success');
       },
-      error: (err) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la création.', 'error')
     });
   }
 
@@ -184,7 +200,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
         this.loadExams(this.currentPage);
         this.showToast('Examen mis à jour.', 'success');
       },
-      error: (err) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour.', 'error')
     });
   }
 
@@ -197,7 +213,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
           this.loadExams(this.currentPage);
           this.showToast('Examen supprimé.', 'success');
         },
-        error: (err) => this.showToast(err.message, 'error')
+        error: (err: any) => this.showToast(err?.message || 'Erreur lors de la suppression.', 'error')
       });
     }
   }
@@ -223,9 +239,9 @@ export class ExamsComponent implements OnInit, OnDestroy {
           : `Statut mis à ${this.statusLabels[newStatus]}.`;
         this.showToast(msg, newStatus === ExamStatus.TERMINE ? 'info' : 'success');
       },
-      error: (err) => {
+      error: (err: any) => {
         this.showStatusModal = false;
-        this.showToast(err.message, 'error');
+        this.showToast(err?.message || 'Erreur lors du changement de statut.', 'error');
       }
     });
   }
@@ -246,14 +262,14 @@ export class ExamsComponent implements OnInit, OnDestroy {
       return;
     }
     this.examService.addResult(this.selectedExam.id, this.newResult).subscribe({
-      next: (res) => {
+      next: (res: Resultat) => {
         if (!this.selectedExam!.resultats) this.selectedExam!.resultats = [];
         this.selectedExam!.resultats.push(res);
         this.newResult = { valeur: '', unite: '' };
         this.loadExams(this.currentPage);
         this.showToast('Résultat ajouté.', 'success');
       },
-      error: (err) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de l\'ajout du résultat.', 'error')
     });
   }
 
@@ -265,15 +281,15 @@ export class ExamsComponent implements OnInit, OnDestroy {
   saveEditResult(): void {
     if (!this.editingResult?.id) return;
     this.examService.updateResult(this.editingResult.id, this.editResultDTO).subscribe({
-      next: (updated) => {
+      next: (updated: Resultat) => {
         if (this.selectedExam?.resultats) {
-          const idx = this.selectedExam.resultats.findIndex(r => r.id === updated.id);
+          const idx = this.selectedExam.resultats.findIndex((r: Resultat) => r.id === updated.id);
           if (idx !== -1) this.selectedExam.resultats[idx] = updated;
         }
         this.editingResult = null;
         this.showToast('Résultat mis à jour.', 'success');
       },
-      error: (err) => this.showToast(err.message, 'error')
+      error: (err: any) => this.showToast(err?.message || 'Erreur lors de la mise à jour du résultat.', 'error')
     });
   }
 
@@ -300,13 +316,13 @@ export class ExamsComponent implements OnInit, OnDestroy {
   viewFullDetails(id: number): void {
     this.loading = true;
     this.examService.getFullDetails(id).subscribe({
-      next: (data) => {
+      next: (data: ExamResponseDTO) => {
         this.selectedFullDetails = data;
         this.showDetailsModal = true;
         this.loading = false;
       },
-      error: (err) => {
-        this.showToast(err.message || 'Impossible de charger les détails.', 'error');
+      error: (err: any) => {
+        this.showToast(err?.message || 'Impossible de charger les détails.', 'error');
         this.loading = false;
       }
     });
