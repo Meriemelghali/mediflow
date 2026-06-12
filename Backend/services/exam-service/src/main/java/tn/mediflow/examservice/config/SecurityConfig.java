@@ -7,7 +7,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.GrantedAuthority;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -47,10 +47,13 @@ public class SecurityConfig {
             if (realmAccess == null || realmAccess.isEmpty()) {
                 return java.util.Collections.emptyList();
             }
-            Collection<String> roles = (Collection<String>) realmAccess.get("roles");
-            return roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                    .collect(Collectors.toList());
+            Object rolesObj = realmAccess.get("roles");
+            if (rolesObj instanceof Collection<?> roles) {
+                return roles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + String.valueOf(role).toUpperCase()))
+                        .collect(Collectors.toList());
+            }
+            return java.util.Collections.emptyList();
         });
         return converter;
     }
