@@ -1,10 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-<<<<<<< Updated upstream:Frontend/src/app/components/exams/exams.component.ts
-import { ExamService } from '../../services/exam.service';
-import { Examen, ExamStatus, PageExamen, Patient, Resultat } from '../../models/exam.model';
-=======
 import { ExamService } from './exam.service';
 import {
   Examen, ExamRequestDTO, ExamResponseDTO,
@@ -16,7 +12,6 @@ interface Toast {
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
 }
->>>>>>> Stashed changes:Frontend/src/app/features/exams/exams.component.ts
 
 @Component({
   selector: 'app-exams',
@@ -128,11 +123,7 @@ export class ExamsComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-<<<<<<< Updated upstream:Frontend/src/app/components/exams/exams.component.ts
-          console.error(err);
-=======
           this.showToast(err.message || 'Erreur de chargement des examens.', 'error');
->>>>>>> Stashed changes:Frontend/src/app/features/exams/exams.component.ts
           this.loading = false;
         }
       });

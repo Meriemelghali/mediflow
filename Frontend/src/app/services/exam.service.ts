@@ -1,9 +1,4 @@
 import { Injectable } from '@angular/core';
-<<<<<<< Updated upstream:Frontend/src/app/services/exam.service.ts
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Examen, PageExamen, ExamStatus, Resultat, Patient } from '../models/exam.model';
-=======
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -12,7 +7,6 @@ import {
   PageExamen, ExamStatus, Resultat, Patient,
   ExamResponseDTO
 } from './exam.model';
->>>>>>> Stashed changes:Frontend/src/app/features/exams/exam.service.ts
 
 @Injectable({
   providedIn: 'root'
