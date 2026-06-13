@@ -45,8 +45,8 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
   isNotifPanelOpen = false;
   private nextNotifId = 0;
   
-  private knownAssuranceEvents: Set<string> = new Set();
-  private knownAppointmentEvents: Set<string> = new Set();
+  private lastAssuranceCount = 0;
+  private lastAppointmentCount = 0;
   private isFirstAssurancePoll = true;
   private isFirstAppointmentPoll = true;
   private eventPollingSub?: Subscription;
@@ -98,18 +98,25 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
     this.assuranceApi.getEvents().subscribe({
       next: (events) => {
         if (!events) return;
+        
         if (this.isFirstAssurancePoll) {
-          // Pre-populate history on login/load
-          events.forEach(e => this.knownAssuranceEvents.add(e));
+          this.lastAssuranceCount = events.length;
           this.isFirstAssurancePoll = false;
           return;
         }
-        events.forEach(event => {
-          if (!this.knownAssuranceEvents.has(event)) {
-            this.knownAssuranceEvents.add(event);
-            this.triggerNotification(event, 'assurance.events');
+
+        if (events.length < this.lastAssuranceCount) {
+          // Reset tracker if backend was restarted
+          this.lastAssuranceCount = events.length;
+        }
+
+        // Process only newly appended events
+        if (events.length > this.lastAssuranceCount) {
+          for (let i = this.lastAssuranceCount; i < events.length; i++) {
+            this.triggerNotification(events[i], 'assurance.events');
           }
-        });
+          this.lastAssuranceCount = events.length;
+        }
       },
       error: (err) => {
         console.error('Error polling assurance events:', err);
@@ -121,18 +128,25 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
     this.appointmentService.getEvents().subscribe({
       next: (events) => {
         if (!events) return;
+        
         if (this.isFirstAppointmentPoll) {
-          // Pre-populate history on login/load
-          events.forEach(e => this.knownAppointmentEvents.add(e));
+          this.lastAppointmentCount = events.length;
           this.isFirstAppointmentPoll = false;
           return;
         }
-        events.forEach(event => {
-          if (!this.knownAppointmentEvents.has(event)) {
-            this.knownAppointmentEvents.add(event);
-            this.triggerNotification(event, 'appointment.events.demo');
+
+        if (events.length < this.lastAppointmentCount) {
+          // Reset tracker if backend was restarted
+          this.lastAppointmentCount = events.length;
+        }
+
+        // Process only newly appended events
+        if (events.length > this.lastAppointmentCount) {
+          for (let i = this.lastAppointmentCount; i < events.length; i++) {
+            this.triggerNotification(events[i], 'appointment.events.demo');
           }
-        });
+          this.lastAppointmentCount = events.length;
+        }
       },
       error: (err) => {
         console.error('Error polling appointment events:', err);
@@ -154,7 +168,7 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
 
     // 1. Appointment Event
     // Expected: RDV #<id> planifié pour patient #?<id> le <date>
-    const aptMatch = cleanMsg.match(/RDV\s+#?(\d+)\s+planifié\s+pour\s+patient\s+#?(\d+)\s+le\s+(.+)/i);
+    const aptMatch = cleanMsg.match(/RDV\s+#?(\d+).*patient\s+#?(\d+).*le\s+(.+)/i);
     if (aptMatch) {
       const [_, aptId, patientId, dateStr] = aptMatch;
       const patientName = getPatientName(patientId);
@@ -180,7 +194,7 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
 
     // 2. Assurance Event
     // Expected: Police d'assurance créée pour patient <id>, taux=<taux>, active=<active>
-    const assuranceMatch = cleanMsg.match(/Police\s+d'assurance\s+créée\s+pour\s+patient\s+#?(\d+),\s+taux=([\d\.]+)/i);
+    const assuranceMatch = cleanMsg.match(/Police.*assurance.*patient\s+#?(\d+).*taux=([\d\.]+)/i);
     if (assuranceMatch) {
       const [_, patientId, taux] = assuranceMatch;
       const patientName = getPatientName(patientId);
