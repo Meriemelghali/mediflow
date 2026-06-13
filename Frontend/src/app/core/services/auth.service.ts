@@ -19,7 +19,7 @@ interface KeycloakTokenResponse {
 })
 export class AuthService {
   // Conservé pour mot de passe oublié / réinitialisation (toujours géré par user-service)
-  private apiUrl = 'http://localhost:8081/api/user';
+  private apiUrl = '/api/user';
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 

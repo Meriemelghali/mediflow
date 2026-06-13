@@ -70,7 +70,7 @@ export class RegisterComponent {
     console.log('Payload envoyé:', payload);
 
     // Call the backend user-service
-    this.http.post('http://localhost:8081/api/user', payload).subscribe({
+    this.http.post('/api/user', payload).subscribe({
       next: (res) => {
         console.log('Inscription réussie:', res);
         this.loading = false;

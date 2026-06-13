@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import {
   Examen, ExamRequestDTO, ResultatRequestDTO,
   PageExamen, ExamStatus, Resultat, Patient,
@@ -14,12 +14,22 @@ import {
 export class ExamService {
   // Toutes les requêtes passent par l'API Gateway via le proxy Angular (proxy.conf.json → http://localhost:8090)
   private readonly apiUrl = '/api/exams';
-  private readonly userApiUrl = '/api/user/api/patients';
+  private readonly userApiUrl = '/api/user';
 
   constructor(private http: HttpClient) { }
 
   getPatients(): Observable<Patient[]> {
-    return this.http.get<Patient[]>(this.userApiUrl).pipe(
+    return this.http.get<any[]>(this.userApiUrl).pipe(
+      map(users =>
+        users
+          .filter(u => u.roles?.includes('PATIENT') || u.activeRole === 'PATIENT')
+          .map(u => ({
+            id: u.patientCode,
+            nom: u.lastName,
+            prenom: u.firstName,
+            email: u.email
+          }))
+      ),
       catchError(this.handleError)
     );
   }

@@ -1,5 +1,5 @@
 server:
-  port: 0
+  port: 8089
 
 spring:
   application:
@@ -11,6 +11,11 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080/realms/mediflow-realm
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: mediflow
+    password: mediflow123
 
 eureka:
   client:

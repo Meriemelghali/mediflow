@@ -1,4 +1,4 @@
-import { Component, OnInit, afterNextRender, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../appointment.service';
@@ -32,11 +32,11 @@ export class AppointmentsComponent implements OnInit {
   constructor(
     private appointmentService: AppointmentService,
     private billingService: BillingService
-  ) {
-    afterNextRender(() => this.load());
-  }
+  ) { }
 
-  ngOnInit() { }
+  ngOnInit() {
+    setTimeout(() => this.load(), 0);
+  }
 
   load() {
     this.loading = true;

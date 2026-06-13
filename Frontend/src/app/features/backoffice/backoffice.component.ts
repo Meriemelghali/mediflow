@@ -40,7 +40,7 @@ export class BackofficeComponent implements OnInit {
   
   notification = { show: false, message: '', type: 'success' };
 
-  private apiUrl = 'http://localhost:8081/api/user';
+  private apiUrl = '/api/user';
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

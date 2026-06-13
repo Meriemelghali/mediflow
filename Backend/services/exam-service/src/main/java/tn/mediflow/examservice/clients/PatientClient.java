@@ -7,6 +7,6 @@ import tn.mediflow.examservice.dto.Patient;
 
 @FeignClient(name = "user-service")
 public interface PatientClient {
-    @GetMapping("/api/user/api/patients/{id}")
+    @GetMapping("/api/user/{id}")
     Patient getPatientById(@PathVariable("id") Long id);
 }

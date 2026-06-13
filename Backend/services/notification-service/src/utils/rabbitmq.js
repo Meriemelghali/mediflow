@@ -10,7 +10,7 @@ class RabbitMQService {
 
   async connect() {
     try {
-      const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
+      const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://mediflow:mediflow123@localhost:5672';
       this.connection = await amqp.connect(rabbitUrl);
       this.channel = await this.connection.createChannel();
 

@@ -5,7 +5,7 @@ import { Appointment, AppointmentRequest, AppointmentStatus } from './appointmen
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentService {
-  private readonly BASE = 'http://localhost:8082/api/appointments';
+  private readonly BASE = '/api/appointments';
 
   constructor(private http: HttpClient) { }
 

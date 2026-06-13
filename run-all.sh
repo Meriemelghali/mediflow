@@ -29,7 +29,7 @@ echo "==========================================================================
 stop_port() {
   local port=$1
   local pids=$(lsof -t -i :$port 2>/dev/null)
-  if [ -not -z "$pids" ] || [ ! -z "$pids" ]; then
+  if [ -n "$pids" ]; then
     echo " -> Port $port is in use. Stopping PIDs: $pids"
     kill -9 $pids 2>/dev/null || true
   fi
