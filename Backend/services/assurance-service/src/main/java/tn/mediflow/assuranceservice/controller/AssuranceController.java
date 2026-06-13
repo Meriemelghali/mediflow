@@ -43,6 +43,11 @@ public class AssuranceController {
         return assuranceService.getById(id);
     }
 
+    @GetMapping("/events")
+    public List<String> getEventLogs() {
+        return tn.mediflow.assuranceservice.messaging.AssuranceEventListener.eventLogs;
+    }
+
     @GetMapping
     public List<AssuranceResponse> getByPatientId(@RequestParam("patientId") Long patientId) {
         return assuranceService.getByPatientId(patientId);

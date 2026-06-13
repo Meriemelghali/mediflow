@@ -32,4 +32,8 @@ export class AssuranceApi {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  getEvents(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/events`);
+  }
 }

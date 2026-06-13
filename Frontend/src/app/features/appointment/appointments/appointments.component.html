@@ -250,6 +250,24 @@
       </table>
     </div>
   }
+  <!-- Console d'événements RabbitMQ asynchrones -->
+  <div style="margin-top: 24px; border-left: 4px solid #f60; padding: 24px; border-radius: 24px; background: color-mix(in srgb, var(--surface) 96%, white 4%); border: 1px solid var(--border); box-shadow: var(--shadow-xs);">
+    <div style="margin-bottom: 14px;">
+      <h2 style="font-size: 16px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin: 0 0 4px 0;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f60; box-shadow: 0 0 8px #f60;"></span>
+        RabbitMQ — Journal des événements asynchrones (Temps réel)
+      </h2>
+      <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Affiche les messages interceptés par AppointmentEventListener lors de la création de rendez-vous.</p>
+    </div>
+    <div style="background-color: #15171e; color: #a9ffaf; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 13px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border);">
+      <div *ngFor="let log of eventLogs" style="margin-bottom: 6px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); padding-bottom: 4px; line-height: 1.4;">
+        <span style="color: #ff9d00;">[RabbitMQ Queue: appointment.events.demo]</span> {{ log }}
+      </div>
+      <div *ngIf="eventLogs.length === 0" style="color: #6c7280; font-style: italic;">
+        Aucun événement RabbitMQ intercepté pour le moment. Créez un nouveau rendez-vous pour voir le flux en direct.
+      </div>
+    </div>
+  </div>
 
 </div>
 

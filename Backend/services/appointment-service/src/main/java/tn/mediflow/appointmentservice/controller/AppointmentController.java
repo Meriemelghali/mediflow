@@ -34,6 +34,11 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getById(id));
     }
 
+    @GetMapping("/events")
+    public ResponseEntity<List<String>> getEventLogs() {
+        return ResponseEntity.ok(tn.mediflow.appointmentservice.messaging.AppointmentEventListener.eventLogs);
+    }
+
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<AppointmentResponse>> getByPatientId(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getByPatientId(patientId));
