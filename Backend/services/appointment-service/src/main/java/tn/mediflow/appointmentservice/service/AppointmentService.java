@@ -7,6 +7,7 @@ import tn.mediflow.appointmentservice.dto.AppointmentResponse;
 import tn.mediflow.appointmentservice.entity.Appointment;
 import tn.mediflow.appointmentservice.entity.AppointmentStatus;
 import tn.mediflow.appointmentservice.repository.AppointmentRepository;
+import tn.mediflow.appointmentservice.messaging.AppointmentEventProducer;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentEventProducer appointmentEventProducer;
 
     public AppointmentResponse create(AppointmentRequest request) {
         Appointment appointment = Appointment.builder()
@@ -27,7 +29,13 @@ public class AppointmentService {
                 .notes(request.getNotes())
                 .build();
 
-        return toResponse(appointmentRepository.save(appointment));
+        AppointmentResponse response = toResponse(appointmentRepository.save(appointment));
+        try {
+            appointmentEventProducer.publishAppointmentCreated(response);
+        } catch (Exception e) {
+            // Log exception but do not roll back creation
+        }
+        return response;
     }
 
     public List<AppointmentResponse> getAll() {

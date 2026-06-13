@@ -13,6 +13,7 @@ import tn.mediflow.roomservice.dto.MedicationDto;
 import tn.mediflow.roomservice.client.PharmacyClient;
 import tn.mediflow.roomservice.repository.BedRepository;
 import tn.mediflow.roomservice.repository.RoomRepository;
+import tn.mediflow.roomservice.messaging.RoomEventProducer;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ public class BedService {
     private final BedRepository bedRepository;
     private final RoomRepository roomRepository;
     private final PharmacyClient pharmacyClient; // Communication OpenFeign → pharmacy-service
+    private final RoomEventProducer roomEventProducer;
 
     // ============================
     // CREATE
@@ -118,6 +120,13 @@ public class BedService {
         bed.assignPatient(patientId, patientName);
         Bed savedBed = bedRepository.save(bed);
         log.info("Patient '{}' (ID: {}) assigne au lit '{}'", patientName, patientId, savedBed.getBedNumber());
+
+        // Publish room assigned event asynchronously to RabbitMQ
+        try {
+            roomEventProducer.publishRoomAssigned(savedBed);
+        } catch (Exception ex) {
+            log.error("❌ Failed to publish room assigned event: {}", ex.getMessage());
+        }
 
         // 2. Appel OpenFeign → pharmacy-service
         List<DispensingDto> dispensings = Collections.emptyList();

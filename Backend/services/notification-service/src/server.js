@@ -18,6 +18,11 @@ app.get('/', (req, res) => {
 
 const start = async () => {
   await connectDB();           // ← se connecte à MongoDB d'abord
+  
+  // Connect to RabbitMQ to start listening for events
+  const rabbitMQService = require('./utils/rabbitmq');
+  await rabbitMQService.connect();
+
   app.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
   });
