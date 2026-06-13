@@ -5,9 +5,6 @@ microservices : Spring Boot (Java) + Node.js côté backend, Angular 19 côté f
 avec Eureka (discovery), Config Server, API Gateway, Keycloak (sécurité OAuth2/JWT) et
 RabbitMQ (communication asynchrone).
 
-> Pour l'analyse détaillée de conformité à la grille de notation, voir
-> [`docs/AUDIT_ROADMAP.md`](docs/AUDIT_ROADMAP.md).
-
 ---
 
 ## 1. Architecture — services et ports
@@ -181,9 +178,3 @@ pour reconstruire l'utilisateur courant (`sub`, `preferred_username`, `given_nam
 
 ---
 
-## 5. Documentation complémentaire
-
-- [`docs/AUDIT_ROADMAP.md`](docs/AUDIT_ROADMAP.md) — checklist détaillée de conformité
-  à la grille de notation (items obligatoires A/B et bonus C), état avant/après ce
-  travail, et points d'attention restants (bonus, `patient-service` en lecture seule,
-  etc.).
