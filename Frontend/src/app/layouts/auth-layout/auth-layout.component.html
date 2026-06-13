@@ -5,14 +5,25 @@
 
     <div class="sidebar-top">
       <!-- Brand -->
-      <div class="brand">
-        <div class="brand-icon">
-          <img src="/app-icon.png" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9px;" />
+      <div class="brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <div class="brand-icon">
+            <img src="/app-icon.png" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 9px;" />
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">MediFlow</span>
+            <span class="brand-tag">Système médical</span>
+          </div>
         </div>
-        <div class="brand-text">
-          <span class="brand-name">MediFlow</span>
-          <span class="brand-tag">Système médical</span>
-        </div>
+
+        <!-- Notification Bell Toggle -->
+        <button class="bell-btn" type="button" (click)="toggleNotificationPanel($event)" [class.has-unread]="unreadCount > 0" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="bell-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+        </button>
       </div>
 
       <!-- Divider -->
@@ -160,6 +171,51 @@
     </div>
 
   </aside>
+
+  <!-- Notification Dropdown Panel -->
+  <div class="notif-dropdown" *ngIf="isNotifPanelOpen" (click)="$event.stopPropagation()">
+    <header class="notif-header">
+      <span class="notif-title">Notifications ({{ unreadCount }} non lues)</span>
+      <button class="notif-clear-btn" type="button" (click)="clearAllNotifications()" *ngIf="persistentNotifications.length > 0">
+        Effacer tout
+      </button>
+    </header>
+
+    <div class="notif-list">
+      <div class="notif-item" *ngFor="let notif of persistentNotifications" [class.unread]="notif.unread" (click)="markAsRead(notif.id)">
+        <div class="notif-icon-col" [class]="notif.type">
+          <!-- Calendar Icon -->
+          <svg *ngIf="notif.icon === 'calendar'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <!-- Shield Icon -->
+          <svg *ngIf="notif.icon === 'shield'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+          <!-- Bell Icon -->
+          <svg *ngIf="notif.icon === 'bell'" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div class="notif-text-col">
+          <span class="notif-item-title">{{ notif.title }}</span>
+          <p class="notif-item-body">{{ notif.body }}</p>
+          <span class="notif-item-time">{{ notif.time }}</span>
+        </div>
+        <button class="notif-item-delete" type="button" (click)="deletePersistentNotification(notif.id, $event)" title="Supprimer">
+          ×
+        </button>
+      </div>
+
+      <div class="notif-empty" *ngIf="persistentNotifications.length === 0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <p>Aucune notification</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Main content ── -->
   <main class="main-content">

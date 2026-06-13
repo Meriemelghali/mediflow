@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, afterNextRender } from '@angular/core';
+import { Component, OnDestroy, OnInit, afterNextRender, HostListener } from '@angular/core';
 import { interval, Subscription } from 'rxjs';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -11,6 +11,16 @@ interface MqNotification {
   message: string;
   queue: string;
   isFading: boolean;
+}
+
+interface PersistentNotification {
+  id: number;
+  title: string;
+  body: string;
+  icon: string;
+  type: string;
+  unread: boolean;
+  time: string;
 }
 
 @Component({
@@ -29,13 +39,21 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
   isRoleMenuOpen = false;
   isDarkTheme = true;
 
+  // RabbitMQ Events state
   mqNotifications: MqNotification[] = [];
+  persistentNotifications: PersistentNotification[] = [];
+  isNotifPanelOpen = false;
   private nextNotifId = 0;
+  
   private knownAssuranceEvents: Set<string> = new Set();
   private knownAppointmentEvents: Set<string> = new Set();
   private isFirstAssurancePoll = true;
   private isFirstAppointmentPoll = true;
   private eventPollingSub?: Subscription;
+
+  get unreadCount(): number {
+    return this.persistentNotifications.filter(n => n.unread).length;
+  }
 
   constructor(
     private authService: AuthService,
@@ -59,6 +77,13 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  @HostListener('document:click')
+  closeDropdowns() {
+    this.isProfileMenuOpen = false;
+    this.isRoleMenuOpen = false;
+    this.isNotifPanelOpen = false;
+  }
+
   private startEventPolling() {
     this.eventPollingSub = interval(3000).subscribe(() => {
       this.pollAssuranceEvents();
@@ -72,6 +97,7 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
   private pollAssuranceEvents() {
     this.assuranceApi.getEvents().subscribe({
       next: (events) => {
+        if (!events) return;
         if (this.isFirstAssurancePoll) {
           // Pre-populate history on login/load
           events.forEach(e => this.knownAssuranceEvents.add(e));
@@ -85,13 +111,16 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
           }
         });
       },
-      error: () => {}
+      error: (err) => {
+        console.error('Error polling assurance events:', err);
+      }
     });
   }
 
   private pollAppointmentEvents() {
     this.appointmentService.getEvents().subscribe({
       next: (events) => {
+        if (!events) return;
         if (this.isFirstAppointmentPoll) {
           // Pre-populate history on login/load
           events.forEach(e => this.knownAppointmentEvents.add(e));
@@ -105,24 +134,109 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
           }
         });
       },
-      error: () => {}
+      error: (err) => {
+        console.error('Error polling appointment events:', err);
+      }
     });
   }
 
+  private formatMessage(msg: string): { title: string; body: string; icon: string; type: string } {
+    // Clean listener prefix
+    const cleanMsg = msg.replace(/^\[.*?EventListener\]\s*/, '');
+    
+    // Quick patient mapping helper
+    const getPatientName = (idStr: string) => {
+      const id = parseInt(idStr, 10);
+      if (id === 1) return 'Test Patient One';
+      if (id === 2) return 'Test Patient Two';
+      return `Patient #${id}`;
+    };
+
+    // 1. Appointment Event
+    // Expected: RDV #<id> planifié pour patient #?<id> le <date>
+    const aptMatch = cleanMsg.match(/RDV\s+#?(\d+)\s+planifié\s+pour\s+patient\s+#?(\d+)\s+le\s+(.+)/i);
+    if (aptMatch) {
+      const [_, aptId, patientId, dateStr] = aptMatch;
+      const patientName = getPatientName(patientId);
+      
+      let formattedDate = dateStr;
+      try {
+        formattedDate = new Date(dateStr).toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {}
+
+      return {
+        title: 'Consultation planifiée',
+        body: `Rendez-vous #${aptId} programmé pour ${patientName} le ${formattedDate}.`,
+        icon: 'calendar',
+        type: 'appointment'
+      };
+    }
+
+    // 2. Assurance Event
+    // Expected: Police d'assurance créée pour patient <id>, taux=<taux>, active=<active>
+    const assuranceMatch = cleanMsg.match(/Police\s+d'assurance\s+créée\s+pour\s+patient\s+#?(\d+),\s+taux=([\d\.]+)/i);
+    if (assuranceMatch) {
+      const [_, patientId, taux] = assuranceMatch;
+      const patientName = getPatientName(patientId);
+      const percentTaux = Math.round(parseFloat(taux) * 100);
+
+      return {
+        title: 'Assurance créée',
+        body: `Couverture d'assurance créée pour ${patientName} (Taux: ${percentTaux}%).`,
+        icon: 'shield',
+        type: 'assurance'
+      };
+    }
+
+    return {
+      title: 'Flux Temps Réel',
+      body: cleanMsg,
+      icon: 'bell',
+      type: 'generic'
+    };
+  }
+
   private triggerNotification(message: string, queue: string) {
+    const formatted = this.formatMessage(message);
     const id = this.nextNotifId++;
+    
+    // 1. Add to toast alerts
     const notif: MqNotification = {
       id,
-      message,
+      message: formatted.body,
       queue,
       isFading: false
     };
     this.mqNotifications.push(notif);
 
-    // Auto fade-out and dismiss after 6 seconds total
+    // Auto fade-out and dismiss toast after 6s
     setTimeout(() => {
       this.fadeMqNotification(id);
     }, 5700);
+
+    // 2. Add to persistent list
+    const timeStr = new Date().toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    const persistentNotif: PersistentNotification = {
+      id,
+      title: formatted.title,
+      body: formatted.body,
+      icon: formatted.icon,
+      type: formatted.type,
+      unread: true,
+      time: timeStr
+    };
+    this.persistentNotifications.unshift(persistentNotif);
   }
 
   fadeMqNotification(id: number) {
@@ -139,6 +253,22 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
     this.mqNotifications = this.mqNotifications.filter(n => n.id !== id);
   }
 
+  markAsRead(id: number) {
+    const notif = this.persistentNotifications.find(n => n.id === id);
+    if (notif) {
+      notif.unread = false;
+    }
+  }
+
+  deletePersistentNotification(id: number, event: Event) {
+    event.stopPropagation();
+    this.persistentNotifications = this.persistentNotifications.filter(n => n.id !== id);
+  }
+
+  clearAllNotifications() {
+    this.persistentNotifications = [];
+  }
+
   ngOnDestroy() {
     this.clockSub?.unsubscribe();
     this.eventPollingSub?.unsubscribe();
@@ -146,7 +276,19 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
 
   toggleProfileMenu() {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
-    if (!this.isProfileMenuOpen) this.isRoleMenuOpen = false;
+    if (this.isProfileMenuOpen) {
+      this.isRoleMenuOpen = false;
+      this.isNotifPanelOpen = false;
+    }
+  }
+
+  toggleNotificationPanel(event: Event) {
+    event.stopPropagation();
+    this.isNotifPanelOpen = !this.isNotifPanelOpen;
+    if (this.isNotifPanelOpen) {
+      this.isProfileMenuOpen = false;
+      this.isRoleMenuOpen = false;
+    }
   }
 
   toggleRoleMenu(event: Event) {
@@ -167,7 +309,6 @@ export class AuthLayoutComponent implements OnInit, OnDestroy {
   }
 
   private applyTheme() {
-    // Basic implementation for dark/light theme switching via body class
     if (this.isDarkTheme) {
       document.body.classList.add('dark-theme');
       document.body.classList.remove('light-theme');
