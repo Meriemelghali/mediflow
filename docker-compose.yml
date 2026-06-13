@@ -5,6 +5,8 @@ services:
   # ─────────────────────────────────────────────
 
   discovery-service:
+    profiles:
+      - full
     build:
       context: ./Backend/infrastructure/discovery-service
     container_name: discovery-service
@@ -19,6 +21,8 @@ services:
       retries: 5
 
   config-server:
+    profiles:
+      - full
     build:
       context: ./Backend/infrastructure/config-server
     container_name: config-server
@@ -36,6 +40,8 @@ services:
       retries: 5
 
   api-gateway:
+    profiles:
+      - full
     build:
       context: ./Backend/infrastructure/api-gateway
     container_name: api-gateway
@@ -105,6 +111,8 @@ services:
   # ─────────────────────────────────────────────
 
   exam-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/exam-service
     container_name: exam-service
@@ -133,6 +141,8 @@ services:
       retries: 5
 
   appointment-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/appointment-service
     container_name: appointment-service
@@ -163,6 +173,8 @@ services:
       retries: 5
 
   room-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/room-service
     container_name: room-service
@@ -188,6 +200,8 @@ services:
       retries: 5
 
   assurance-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/assurance-service
     container_name: assurance-service
@@ -221,6 +235,8 @@ services:
       retries: 5
 
   patient-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/patient-service
     container_name: patient-service
@@ -290,6 +306,8 @@ services:
   # Node.js Services
   # ==========================================
   user-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/user-service
       dockerfile: Dockerfile
@@ -302,6 +320,8 @@ services:
       - mediflow-network
 
   notification-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/notification-service
       dockerfile: Dockerfile
@@ -320,6 +340,8 @@ services:
   # Java Spring Boot Services
   # ==========================================
   billing-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/billing-service
       dockerfile: Dockerfile
@@ -357,6 +379,8 @@ services:
       retries: 5
 
   pharmacy-service:
+    profiles:
+      - full
     build:
       context: ./Backend/services/pharmacy-service
       dockerfile: Dockerfile
@@ -391,6 +415,8 @@ services:
   # Frontend
   # ==========================================
   frontend:
+    profiles:
+      - full
     build:
       context: ./Frontend
       dockerfile: Dockerfile

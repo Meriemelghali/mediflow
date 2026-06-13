@@ -35,16 +35,21 @@ identifiants de connexion sont fournis via les fichiers `.env` de ces deux servi
 
 ## 2. Lancer le projet
 
-### Option A — Docker Compose (stack complète)
+### Option A — Docker Compose
 
+#### Option A1: Stack Complète (Démarrage Tout-Docker)
+Pour lancer tous les conteneurs (microservices, bases de données, sécurité, gateway et frontend) en Docker :
 ```bash
-docker compose up --build
+docker compose --profile full up --build
 ```
-
 Cela démarre, dans l'ordre imposé par `depends_on`/`healthcheck` :
-`discovery-service` → `config-server` / `keycloak` (import automatique du realm
-`mediflow-realm` via `--import-realm`) / `rabbitmq` / `mysql` / `postgres` →
-`api-gateway` + tous les microservices métier → `frontend` (nginx, port 4200).
+`discovery-service` → `config-server` / `keycloak` (import automatique du realm `mediflow-realm`) / `rabbitmq` / `mysql` / `postgres` → `api-gateway` + tous les microservices métier → `frontend` (nginx, port 4200).
+
+#### Option A2: Infra-Only (Pour développement local / Mode hybride)
+Pour lancer uniquement les bases de données (MySQL, Postgres), RabbitMQ et Keycloak dans des conteneurs (et exécuter les applications Spring/Node/Angular en local) :
+```bash
+docker compose up -d
+```
 
 Accès :
 - Frontend : http://localhost:4200
