@@ -153,27 +153,6 @@
         </table>
       </div>
     </section>
-
-    <!-- Console d'événements RabbitMQ asynchrones -->
-    <section class="card-shell table-card rabbitmq-events-section" style="margin-top: 16px; border-left: 4px solid #f60;">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title" style="display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
-            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f60; box-shadow: 0 0 8px #f60;"></span>
-            RabbitMQ — Journal des événements asynchrones (Temps réel)
-          </h2>
-          <p class="section-subtitle">Affiche les messages interceptés par AssuranceEventListener lors de la création de polices d'assurance.</p>
-        </div>
-      </div>
-      <div style="background-color: #15171e; color: #a9ffaf; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 13px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border);">
-        <div *ngFor="let log of eventLogs()" style="margin-bottom: 6px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); padding-bottom: 4px; line-height: 1.4;">
-          <span style="color: #ff9d00;">[RabbitMQ Queue: assurance.events]</span> {{ log }}
-        </div>
-        <div *ngIf="eventLogs().length === 0" style="color: #6c7280; font-style: italic;">
-          Aucun événement RabbitMQ intercepté pour le moment. Créez un nouveau contrat d'assurance pour voir le flux en direct.
-        </div>
-      </div>
-    </section>
   </div>
 
   <div class="modal-backdrop" *ngIf="isModalOpen()" (click)="closeModal()">

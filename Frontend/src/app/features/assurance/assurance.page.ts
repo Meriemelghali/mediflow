@@ -24,7 +24,6 @@ export class AssurancePageComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   toast = signal<string | null>(null);
-  eventLogs = signal<string[]>([]);
 
   assurances = signal<Assurance[]>([]);
   selected = signal<Assurance | null>(null);
@@ -56,16 +55,7 @@ export class AssurancePageComponent implements OnInit {
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.refreshByPatient();
-      this.refreshEvents();
-      setInterval(() => this.refreshEvents(), 3000);
     }
-  }
-
-  refreshEvents() {
-    this.api.getEvents().subscribe({
-      next: logs => this.eventLogs.set(logs.reverse()),
-      error: () => {}
-    });
   }
 
   patientLabel(patientId: number | null) {

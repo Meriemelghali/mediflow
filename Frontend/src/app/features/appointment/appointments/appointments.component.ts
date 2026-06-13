@@ -18,8 +18,6 @@ export class AppointmentsComponent implements OnInit {
   filtered: Appointment[] = [];
   loading = false;
   error = '';
-  eventLogs: string[] = [];
-
   searchQuery = '';
   statusFilter = '';
 
@@ -37,17 +35,6 @@ export class AppointmentsComponent implements OnInit {
 
   ngOnInit() {
     setTimeout(() => this.load(), 0);
-    this.refreshEvents();
-    setInterval(() => this.refreshEvents(), 3000);
-  }
-
-  refreshEvents() {
-    this.appointmentService.getEvents().subscribe({
-      next: (logs: string[]) => {
-        this.eventLogs = [...logs].reverse();
-      },
-      error: () => {}
-    });
   }
 
   load() {

@@ -166,4 +166,23 @@
     <router-outlet />
   </main>
 
+  <!-- Container for RabbitMQ notifications -->
+  <div class="mq-notification-container">
+    <div *ngFor="let notif of mqNotifications" 
+         class="mq-notification" 
+         [class.fade-out]="notif.isFading">
+      <div class="mq-icon-wrapper">
+        <span class="mq-icon-pulse"></span>
+      </div>
+      <div class="mq-content">
+        <div class="mq-title-row">
+          <span class="mq-title">Flux Temps Réel (RabbitMQ)</span>
+          <button class="mq-close" (click)="dismissMqNotification(notif.id)">×</button>
+        </div>
+        <div class="mq-body">{{ notif.message }}</div>
+        <span class="mq-meta">Queue: {{ notif.queue }}</span>
+      </div>
+    </div>
+  </div>
+
 </div>
